@@ -1,0 +1,15 @@
+/* ============================================
+   MASTER STYLESHEET - Scheduler Assistant
+   ============================================ */
+
+/* Import Google Fonts */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
+
+/* Import all stylesheets */
+@import url('./variables.css');
+@import url('./base.css');
+@import url('./components.css');
+@import url('./components2.css');
+@import url('./layout.css');
+@import url('./calendar.css');
+@import url('./animations.css');

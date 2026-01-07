@@ -1,0 +1,49 @@
+"""
+SQLAlchemy Models
+"""
+from sqlalchemy import Column, String, Boolean, DateTime, Enum
+from sqlalchemy.sql import func
+from app.database import Base
+import enum
+import uuid
+
+
+class CategoryEnum(str, enum.Enum):
+    work = "work"
+    personal = "personal"
+    health = "health"
+    learning = "learning"
+    finance = "finance"
+    social = "social"
+
+
+class PriorityEnum(str, enum.Enum):
+    high = "high"
+    medium = "medium"
+    low = "low"
+
+
+class Event(Base):
+    __tablename__ = "events"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    title = Column(String(255), nullable=False)
+    description = Column(String(1000), nullable=True)
+    start_date = Column(DateTime(timezone=True), nullable=False)
+    end_date = Column(DateTime(timezone=True), nullable=False)
+    category = Column(Enum(CategoryEnum), default=CategoryEnum.work)
+    priority = Column(Enum(PriorityEnum), default=PriorityEnum.medium)
+    is_recurring = Column(Boolean, default=False)
+    is_completed = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class PomodoroSession(Base):
+    __tablename__ = "pomodoro_sessions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    mode = Column(String(20), nullable=False)  # work, shortBreak, longBreak
+    duration = Column(String, nullable=False)  # in seconds
+    completed = Column(Boolean, default=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
