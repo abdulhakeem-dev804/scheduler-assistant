@@ -4,9 +4,14 @@
 
 // Dynamically determine the API URL based on how the frontend is accessed
 function getApiBaseUrl(): string {
+    // Prioritize environment variable if set (works for both client and server)
+    if (process.env.NEXT_PUBLIC_API_URL) {
+        return process.env.NEXT_PUBLIC_API_URL;
+    }
+
     if (typeof window === 'undefined') {
-        // Server-side rendering
-        return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+        // Server-side rendering fallback
+        return 'http://localhost:8000';
     }
 
     const { hostname, protocol } = window.location;

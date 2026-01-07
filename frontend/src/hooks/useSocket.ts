@@ -7,8 +7,13 @@ import { eventKeys } from '@/hooks/useEvents';
 
 // Dynamically determine the WebSocket URL based on how the frontend is accessed
 function getWsUrl(): string {
+    // Prioritize environment variable if set
+    if (process.env.NEXT_PUBLIC_WS_URL) {
+        return process.env.NEXT_PUBLIC_WS_URL;
+    }
+
     if (typeof window === 'undefined') {
-        return process.env.NEXT_PUBLIC_WS_URL || 'http://localhost:8000';
+        return 'http://localhost:8000';
     }
 
     const { hostname } = window.location;
