@@ -1,7 +1,7 @@
 """
 SQLAlchemy Models
 """
-from sqlalchemy import Column, String, Boolean, DateTime, Enum, Integer, JSON
+from sqlalchemy import Column, String, Boolean, DateTime, Enum, Integer, JSON, text
 from sqlalchemy.sql import func
 from app.database import Base
 import enum
@@ -56,8 +56,8 @@ class Event(Base):
     reschedule_count = Column(Integer, default=0)
     original_start_date = Column(DateTime(timezone=True), nullable=True)
     
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
-    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+    updated_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), onupdate=func.now())
 
 
 class PomodoroSession(Base):
@@ -67,4 +67,4 @@ class PomodoroSession(Base):
     mode = Column(String(20), nullable=False)  # work, shortBreak, longBreak
     duration = Column(String, nullable=False)  # in seconds
     completed = Column(Boolean, default=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    created_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))

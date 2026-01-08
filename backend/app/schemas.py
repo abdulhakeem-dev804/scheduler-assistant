@@ -81,8 +81,8 @@ class EventResponse(EventBase):
     resolution: ResolutionEnum = ResolutionEnum.pending    # Default for NULL DB values
     reschedule_count: int = 0
     original_start_date: Optional[datetime] = None
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = Field(default=None)
+    updated_at: Optional[datetime] = Field(default=None)
 
     class Config:
         from_attributes = True

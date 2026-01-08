@@ -48,6 +48,50 @@ async def get_event(event_id: str, db: Session = Depends(get_db)):
     return event
 
 
+
+def check_conflicts(db: Session, start_date: datetime, end_date: datetime, exclude_id: str = None) -> Optional[Event]:
+    """
+    Check for conflicts with relaxed rules:
+    - Events can overlap
+    - BUT they cannot start/end at nearly the same time
+    - Allow overlap if StartDiff >= 1 hour OR EndDiff >= 1 hour
+    """
+    query = db.query(Event).filter(
+        Event.start_date < end_date,
+        Event.end_date > start_date,
+        Event.timing_mode != 'anytime',
+        Event.is_completed == False
+    )
+    
+    if exclude_id:
+        query = query.filter(Event.id != exclude_id)
+        
+    candidates = query.all()
+    
+    for event in candidates:
+        # Calculate absolute differences in seconds
+        # Handle timezone awareness - convert both to naive via replacement
+        s1 = event.start_date.replace(tzinfo=None) if event.start_date else datetime.min
+        s2 = start_date.replace(tzinfo=None) if start_date else datetime.min
+        e1 = event.end_date.replace(tzinfo=None) if event.end_date else datetime.min
+        e2 = end_date.replace(tzinfo=None) if end_date else datetime.min
+        
+        start_diff = abs((s1 - s2).total_seconds())
+        end_diff = abs((e1 - e2).total_seconds())
+        
+        # Conflict if BOTH start and end are too close (< 1 hour)
+        # This blocks:
+        # - Exact duplicates (diffs = 0)
+        # - Slight offsets (e.g. 30 mins later)
+        # But allows:
+        # - Same start, much longer duration (EndDiff > 3600)
+        # - Shifted by >= 1 hour (StartDiff >= 3600)
+        if start_diff < 3600 and end_diff < 3600:
+            return event
+            
+    return None
+
+
 @router.post("/", response_model=EventResponse, status_code=201)
 async def create_event(event_data: EventCreate, db: Session = Depends(get_db)):
     """Create a new event"""
@@ -66,23 +110,9 @@ async def create_event(event_data: EventCreate, db: Session = Depends(get_db)):
             detail="Cannot schedule events in the past"
         )
     
-    # Conflict Detection: Skip if this is an "anytime" task (flexible timing)
-    timing_mode = getattr(event_data, 'timing_mode', None) or 'specific'
-    if timing_mode != 'anytime':
-        # Check for overlapping events (excluding "anytime" events)
-        # Two events overlap if: start1 < end2 AND end1 > start2
-        conflicting_event = db.query(Event).filter(
-            Event.start_date < event_data.end_date,
-            Event.end_date > event_data.start_date,
-            Event.timing_mode != 'anytime',  # Anytime events can overlap
-            Event.is_completed == False  # Ignore completed events
-        ).first()
-        
-        if conflicting_event:
-            raise HTTPException(
-                status_code=409,
-                detail=f"Time conflict with existing event: '{conflicting_event.title}' ({conflicting_event.start_date.strftime('%H:%M')} - {conflicting_event.end_date.strftime('%H:%M')})"
-            )
+    # Conflict Detection removed as per user request
+    # check_conflicts(...)
+
     
     event = Event(**event_data.model_dump())
     db.add(event)
@@ -109,21 +139,10 @@ async def update_event(
     new_end = update_data.get('end_date', event.end_date)
     new_timing_mode = update_data.get('timing_mode', event.timing_mode) or 'specific'
     
-    # Conflict Detection: Skip if this is an "anytime" task
-    if new_timing_mode != 'anytime':
-        conflicting_event = db.query(Event).filter(
-            Event.id != event_id,  # Exclude this event itself
-            Event.start_date < new_end,
-            Event.end_date > new_start,
-            Event.timing_mode != 'anytime',
-            Event.is_completed == False
-        ).first()
-        
-        if conflicting_event:
-            raise HTTPException(
-                status_code=409,
-                detail=f"Time conflict with existing event: '{conflicting_event.title}' ({conflicting_event.start_date.strftime('%H:%M')} - {conflicting_event.end_date.strftime('%H:%M')})"
-            )
+    # Conflict Detection removed
+    # if new_timing_mode != 'anytime':
+    #     conflicting_event = check_conflicts(...)
+
     
     for field, value in update_data.items():
         setattr(event, field, value)
