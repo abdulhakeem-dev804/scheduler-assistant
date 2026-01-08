@@ -67,7 +67,7 @@ export function ResolutionModal({ isOpen, onClose, event, onResolve }: Resolutio
                         Task Resolution
                     </DialogTitle>
                     <DialogDescription>
-                        This task's deadline has passed. What happened?
+                        This task&apos;s deadline has passed. What happened?
                     </DialogDescription>
                 </DialogHeader>
 

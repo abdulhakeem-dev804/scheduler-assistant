@@ -34,13 +34,6 @@ export function SmartDatePicker({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Reset view to current month when opening
-    useEffect(() => {
-        if (isOpen) {
-            setViewDate(value ? new Date(value) : new Date());
-        }
-    }, [isOpen, value]);
-
     const handleSelect = (date: Date) => {
         onChange(format(date, 'yyyy-MM-dd'));
         setIsOpen(false);
@@ -64,7 +57,13 @@ export function SmartDatePicker({
             {/* Trigger Button */}
             <button
                 type="button"
-                onClick={() => setIsOpen(!isOpen)}
+                onClick={() => {
+                    if (!isOpen) {
+                        // Reset view to current value or today when opening
+                        setViewDate(value ? new Date(value) : new Date());
+                    }
+                    setIsOpen(!isOpen);
+                }}
                 className={cn(
                     "w-full flex items-center justify-between px-3 py-2 rounded-md border transition-all duration-200",
                     "bg-background hover:bg-accent/50",
