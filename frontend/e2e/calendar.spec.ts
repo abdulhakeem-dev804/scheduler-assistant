@@ -17,8 +17,8 @@ test.describe('Calendar Page', () => {
         const title = page.locator('h1');
         const initialTitle = await title.textContent();
 
-        // Click next month button using aria-label
-        await page.getByLabel('Next').click();
+        // Click next month button - use getByRole with exact name to avoid Next.js dev tools
+        await page.getByRole('button', { name: 'Next', exact: true }).click();
 
         // Title should change
         await expect(title).not.toHaveText(initialTitle!);
@@ -39,8 +39,9 @@ test.describe('Calendar Page', () => {
     });
 
     test('can open the new event modal', async ({ page }) => {
-        await page.getByLabel('New Event').click();
+        await page.getByRole('button', { name: 'New Event' }).click();
         await expect(page.getByRole('dialog')).toBeVisible();
-        await expect(page.getByText('New Event')).toBeVisible();
+        // Use dialog heading specifically to avoid matching both button and heading
+        await expect(page.getByRole('heading', { name: 'New Event' })).toBeVisible();
     });
 });
