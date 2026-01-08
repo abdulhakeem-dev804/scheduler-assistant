@@ -110,18 +110,28 @@ def test_delete_event(client):
 
 def test_toggle_event_completion(client):
     """Test toggling event completion status"""
-    # Create event with a PAST date (so toggle-complete validation passes)
+    # Use dynamic dates: Event starts 1 hour ago (so it 'has started')
+    # but is still 'today' (passes creation validation)
+    from datetime import datetime, timedelta, timezone
+    
+    now = datetime.now(timezone.utc)
+    start_time = now - timedelta(hours=1)  # 1 hour ago (event has started)
+    end_time = now + timedelta(hours=1)    # 1 hour from now
+    
     event_data = {
         "title": "Toggle Test",
-        "start_date": "2025-01-01T09:00:00Z",  # Past date
-        "end_date": "2025-01-01T10:00:00Z"
+        "start_date": start_time.isoformat(),
+        "end_date": end_time.isoformat()
     }
     create_response = client.post("/api/events/", json=event_data)
-    event_id = create_response.json()["id"]
     
+    # Verify creation succeeded
+    assert create_response.status_code == 201, f"Failed to create event: {create_response.json()}"
+    
+    event_id = create_response.json()["id"]
     assert create_response.json()["is_completed"] == False
     
-    # Toggle completion
+    # Toggle completion (should work since event has started)
     response = client.patch(f"/api/events/{event_id}/toggle-complete")
     assert response.status_code == 200
     assert response.json()["is_completed"] == True
