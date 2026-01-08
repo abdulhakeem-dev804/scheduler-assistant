@@ -158,6 +158,6 @@ jobs:
       - name: Deploy backend to Railway
         run: |
           npm install -g @railway/cli
-          cd backend && railway up --service scheduler-assistant
+          cd backend && railway up --service scheduler-assistant --detach
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
