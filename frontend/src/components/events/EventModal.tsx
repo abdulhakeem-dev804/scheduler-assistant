@@ -123,17 +123,10 @@ export function EventModal({
     }, [isOpen, event?.id, defaultDate]);
 
     const handleSubmit = (data: EventFormData) => {
-        // Create dates preserving local timezone
-        const startDateTime = new Date(`${data.startDate}T${data.startTime}:00`);
-        const endDateTime = new Date(`${data.endDate}T${data.endTime}:00`);
-
-        // Get timezone offset and adjust to keep the intended local time
-        const tzOffset = startDateTime.getTimezoneOffset() * 60000;
-
-        // Store as ISO string but adjusted for timezone
-        // This ensures the date shows correctly regardless of timezone
-        const startISO = new Date(startDateTime.getTime() - tzOffset).toISOString();
-        const endISO = new Date(endDateTime.getTime() - tzOffset).toISOString();
+        // Send the local datetime string directly to the backend
+        // The backend will store it as-is, preserving the user's intended time
+        const startISO = `${data.startDate}T${data.startTime}:00`;
+        const endISO = `${data.endDate}T${data.endTime}:00`;
 
         onSave({
             title: data.title,
