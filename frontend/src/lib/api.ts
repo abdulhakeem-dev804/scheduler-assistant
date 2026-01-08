@@ -26,8 +26,8 @@ function getApiBaseUrl(): string {
         return `http://${hostname}:8000`;
     }
 
-    // If accessed via localtunnel or other remote URL
-    return 'https://scheduler-api.loca.lt';
+    // If accessed via localtunnel or other remote URL (e.g. Vercel)
+    return 'https://scheduler-api.abdulhakeem.dev';
 }
 
 const API_BASE_URL = getApiBaseUrl();
