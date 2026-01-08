@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format, isSameDay, parseISO, startOfMonth } from 'date-fns';
-import { cn, getMonthDays, isSameMonth, isToday, categoryColors } from '@/lib/utils';
+import { format, isSameDay, startOfMonth } from 'date-fns';
+import { cn, getMonthDays, isSameMonth, isToday, categoryColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 
 interface MonthViewProps {
@@ -18,7 +18,7 @@ export function MonthView({ currentDate, events, onDateClick, onEventClick }: Mo
 
     const getEventsForDay = (date: Date): Event[] => {
         return events.filter((event) => {
-            const eventDate = parseISO(event.startDate);
+            const eventDate = parseLocalDate(event.startDate);
             return isSameDay(eventDate, date);
         });
     };

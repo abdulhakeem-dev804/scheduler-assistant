@@ -2,6 +2,21 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday } from "date-fns";
 
+/**
+ * Parse a date string as local time (not UTC).
+ * This fixes the timezone issue where parseISO treats strings without timezone as UTC.
+ * @param dateString - ISO-like date string (e.g., "2026-01-08T14:00:00")
+ * @returns Date object interpreted as local time
+ */
+export function parseLocalDate(dateString: string): Date {
+  // If the string already has timezone info (Z or +/-), use parseISO
+  if (dateString.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateString)) {
+    return parseISO(dateString);
+  }
+  // Otherwise, use new Date() which interprets as local time
+  return new Date(dateString);
+}
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }

@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format, parseISO, isToday, isTomorrow, addHours } from 'date-fns';
-import { cn, categoryColors } from '@/lib/utils';
+import { format, isToday, isTomorrow, addHours } from 'date-fns';
+import { cn, categoryColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -19,15 +19,15 @@ export function UpcomingEvents({ events, onEventClick, maxItems = 5 }: UpcomingE
         const now = new Date();
         return events
             .filter((e) => {
-                const startDate = parseISO(e.startDate);
+                const startDate = parseLocalDate(e.startDate);
                 return startDate >= now && !e.isCompleted;
             })
-            .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime())
+            .sort((a, b) => parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime())
             .slice(0, maxItems);
     }, [events, maxItems]);
 
     const getTimeLabel = (dateStr: string): string => {
-        const date = parseISO(dateStr);
+        const date = parseLocalDate(dateStr);
         if (isToday(date)) {
             return `Today at ${format(date, 'h:mm a')}`;
         }

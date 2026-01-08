@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react';
 import { format, parseISO, isToday as isTodayFn, isTomorrow, addDays, isBefore, isAfter } from 'date-fns';
-import { cn, categoryColors, priorityColors } from '@/lib/utils';
+import { cn, categoryColors, priorityColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,14 +25,14 @@ export function AgendaView({ events, onEventClick, onToggleComplete }: AgendaVie
     const groupedEvents = useMemo(() => {
         const now = new Date();
         const upcoming = events
-            .filter((e) => !isBefore(parseISO(e.endDate), now))
-            .sort((a, b) => parseISO(a.startDate).getTime() - parseISO(b.startDate).getTime());
+            .filter((e) => !isBefore(parseLocalDate(e.endDate), now))
+            .sort((a, b) => parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime());
 
         const groups: GroupedEvents[] = [];
         const dateMap = new Map<string, Event[]>();
 
         upcoming.forEach((event) => {
-            const dateStr = format(parseISO(event.startDate), 'yyyy-MM-dd');
+            const dateStr = format(parseLocalDate(event.startDate), 'yyyy-MM-dd');
             const existing = dateMap.get(dateStr) || [];
             dateMap.set(dateStr, [...existing, event]);
         });
@@ -114,7 +114,7 @@ export function AgendaView({ events, onEventClick, onToggleComplete }: AgendaVie
                                             <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                                                 <Clock className="h-3.5 w-3.5" />
                                                 <span>
-                                                    {format(parseISO(event.startDate), 'h:mm a')} - {format(parseISO(event.endDate), 'h:mm a')}
+                                                    {format(parseLocalDate(event.startDate), 'h:mm a')} - {format(parseLocalDate(event.endDate), 'h:mm a')}
                                                 </span>
                                             </div>
 

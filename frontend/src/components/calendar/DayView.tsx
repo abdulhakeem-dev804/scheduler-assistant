@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format, isSameDay, parseISO, getHours, getMinutes } from 'date-fns';
-import { cn, isToday, categoryColors } from '@/lib/utils';
+import { format, isSameDay, getHours, getMinutes } from 'date-fns';
+import { cn, isToday, categoryColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -19,14 +19,14 @@ const HOUR_HEIGHT = 80; // pixels per hour
 export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayViewProps) {
     const dayEvents = useMemo(() => {
         return events.filter((event) => {
-            const eventDate = parseISO(event.startDate);
+            const eventDate = parseLocalDate(event.startDate);
             return isSameDay(eventDate, currentDate);
         });
     }, [events, currentDate]);
 
     const getEventPosition = (event: Event) => {
-        const startDate = parseISO(event.startDate);
-        const endDate = parseISO(event.endDate);
+        const startDate = parseLocalDate(event.startDate);
+        const endDate = parseLocalDate(event.endDate);
         const startHour = getHours(startDate) + getMinutes(startDate) / 60;
         const endHour = getHours(endDate) + getMinutes(endDate) / 60;
         const duration = Math.max(endHour - startHour, 0.5);
@@ -111,7 +111,7 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
                                 >
                                     <div className="font-medium">{event.title}</div>
                                     <div className="text-sm opacity-75 mt-1">
-                                        {format(parseISO(event.startDate), 'h:mm a')} - {format(parseISO(event.endDate), 'h:mm a')}
+                                        {format(parseLocalDate(event.startDate), 'h:mm a')} - {format(parseLocalDate(event.endDate), 'h:mm a')}
                                     </div>
                                     {event.description && height > 80 && (
                                         <div className="text-sm opacity-60 mt-2 line-clamp-2">

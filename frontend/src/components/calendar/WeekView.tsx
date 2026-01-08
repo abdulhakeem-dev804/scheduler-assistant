@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format, isSameDay, parseISO, getHours, getMinutes } from 'date-fns';
-import { cn, getWeekDays, isToday, categoryColors } from '@/lib/utils';
+import { format, isSameDay, getHours, getMinutes } from 'date-fns';
+import { cn, getWeekDays, isToday, categoryColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
 
@@ -21,14 +21,14 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
 
     const getEventsForDay = (date: Date): Event[] => {
         return events.filter((event) => {
-            const eventDate = parseISO(event.startDate);
+            const eventDate = parseLocalDate(event.startDate);
             return isSameDay(eventDate, date);
         });
     };
 
     const getEventPosition = (event: Event) => {
-        const startDate = parseISO(event.startDate);
-        const endDate = parseISO(event.endDate);
+        const startDate = parseLocalDate(event.startDate);
+        const endDate = parseLocalDate(event.endDate);
         const startHour = getHours(startDate) + getMinutes(startDate) / 60;
         const endHour = getHours(endDate) + getMinutes(endDate) / 60;
         const duration = Math.max(endHour - startHour, 0.5); // Minimum 30 min display
@@ -122,7 +122,7 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
                                         >
                                             <div className="text-xs font-medium truncate">{event.title}</div>
                                             <div className="text-[10px] opacity-75">
-                                                {format(parseISO(event.startDate), 'h:mm a')}
+                                                {format(parseLocalDate(event.startDate), 'h:mm a')}
                                             </div>
                                         </div>
                                     );
