@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { ChevronDown, ChevronLeft, ChevronRight, Calendar } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, isPast, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
+import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isToday, isPast, addMonths, subMonths, startOfWeek, endOfWeek, startOfToday } from 'date-fns';
 
 interface SmartDatePickerProps {
     value: string | null; // yyyy-MM-dd format
@@ -47,8 +47,7 @@ export function SmartDatePicker({
     const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
     const selectedDate = value ? new Date(value) : null;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
+    const today = startOfToday(); // Use date-fns for consistent timezone handling
 
     const weekDays = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
@@ -129,7 +128,8 @@ export function SmartDatePicker({
                             const isCurrentMonth = isSameMonth(day, viewDate);
                             const isSelected = selectedDate && isSameDay(day, selectedDate);
                             const isTodayDate = isToday(day);
-                            const isPastDate = day < today;
+                            // Compare dates properly - a day is past if it's before today's date
+                            const isPastDate = isTodayDate ? false : day < today;
                             const isDisabled = isPastDate;
 
                             return (
