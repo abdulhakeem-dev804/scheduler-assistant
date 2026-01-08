@@ -7,7 +7,7 @@ test.describe('Event Management', () => {
 
     test('can create a new event', async ({ page }) => {
         // Open modal
-        await page.getByRole('button', { name: /New Event/i }).click();
+        await page.getByLabel('New Event').click();
         await expect(page.getByRole('dialog')).toBeVisible();
 
         // Fill in event details
@@ -26,7 +26,7 @@ test.describe('Event Management', () => {
 
     test('validates required fields', async ({ page }) => {
         // Open modal
-        await page.getByRole('button', { name: /New Event/i }).click();
+        await page.getByLabel('New Event').click();
 
         // Try to submit without title
         await page.getByRole('button', { name: 'Create Event' }).click();
@@ -36,7 +36,7 @@ test.describe('Event Management', () => {
     });
 
     test('can close modal with cancel button', async ({ page }) => {
-        await page.getByRole('button', { name: /New Event/i }).click();
+        await page.getByLabel('New Event').click();
         await expect(page.getByRole('dialog')).toBeVisible();
 
         await page.getByRole('button', { name: 'Cancel' }).click();

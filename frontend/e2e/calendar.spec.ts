@@ -17,8 +17,8 @@ test.describe('Calendar Page', () => {
         const title = page.locator('h1');
         const initialTitle = await title.textContent();
 
-        // Click next
-        await page.getByRole('button').filter({ has: page.locator('svg') }).first().click();
+        // Click next month button using aria-label
+        await page.getByLabel('Next').click();
 
         // Title should change
         await expect(title).not.toHaveText(initialTitle!);
@@ -39,7 +39,7 @@ test.describe('Calendar Page', () => {
     });
 
     test('can open the new event modal', async ({ page }) => {
-        await page.getByRole('button', { name: /New Event/i }).click();
+        await page.getByLabel('New Event').click();
         await expect(page.getByRole('dialog')).toBeVisible();
         await expect(page.getByText('New Event')).toBeVisible();
     });

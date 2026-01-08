@@ -66,10 +66,10 @@ export function Header({
                 <div className="flex items-center gap-2 lg:gap-4">
                     {/* Navigation controls */}
                     <div className="flex items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={onPrevious} className="h-9 w-9">
+                        <Button variant="ghost" size="icon" onClick={onPrevious} className="h-9 w-9" aria-label="Previous">
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={onNext} className="h-9 w-9">
+                        <Button variant="ghost" size="icon" onClick={onNext} className="h-9 w-9" aria-label="Next">
                             <ChevronRight className="h-4 w-4" />
                         </Button>
                         <Button
@@ -145,7 +145,7 @@ export function Header({
                     </div>
 
                     {/* Add Event Button */}
-                    <Button onClick={onAddEvent} size="sm" className="gap-2">
+                    <Button onClick={onAddEvent} size="sm" className="gap-2" aria-label="New Event">
                         <Plus className="h-4 w-4" />
                         <span className="hidden sm:inline">New Event</span>
                     </Button>
