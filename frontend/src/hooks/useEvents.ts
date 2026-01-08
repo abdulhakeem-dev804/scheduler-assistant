@@ -9,13 +9,19 @@ function transformEvent(apiEvent: ApiEvent): Event {
     return {
         id: apiEvent.id,
         title: apiEvent.title,
-        description: apiEvent.description,
+        description: apiEvent.description || '', // Ensure string if type expects it (though optional in interface)
         startDate: apiEvent.start_date,
         endDate: apiEvent.end_date,
         category: apiEvent.category as Event['category'],
         priority: apiEvent.priority as Event['priority'],
         isRecurring: apiEvent.is_recurring,
         isCompleted: apiEvent.is_completed,
+        // Map new fields with defaults
+        subtasks: apiEvent.subtasks || [],
+        timingMode: apiEvent.timing_mode || 'specific',
+        resolution: apiEvent.resolution || 'pending',
+        rescheduleCount: apiEvent.reschedule_count || 0,
+        originalStartDate: apiEvent.original_start_date,
         createdAt: apiEvent.created_at,
         updatedAt: apiEvent.updated_at,
     };

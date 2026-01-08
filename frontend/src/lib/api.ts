@@ -158,6 +158,12 @@ interface Event {
     priority: string;
     is_recurring: boolean;
     is_completed: boolean;
+    // New fields
+    subtasks?: Array<{ id: string; title: string; completed: boolean }>;
+    timing_mode?: 'specific' | 'anytime' | 'deadline';
+    resolution?: 'pending' | 'completed' | 'missed' | 'rescheduled';
+    reschedule_count?: number;
+    original_start_date?: string;
     created_at: string;
     updated_at: string;
 }
