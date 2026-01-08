@@ -55,6 +55,10 @@ describe('EventModal', () => {
             isCompleted: false,
             createdAt: '2026-01-07T00:00:00.000Z',
             updatedAt: '2026-01-07T00:00:00.000Z',
+            subtasks: [],
+            timingMode: 'specific' as const,
+            resolution: 'pending' as const,
+            rescheduleCount: 0,
         };
 
         render(
@@ -84,6 +88,10 @@ describe('EventModal', () => {
             isCompleted: false,
             createdAt: '2026-01-07T00:00:00.000Z',
             updatedAt: '2026-01-07T00:00:00.000Z',
+            subtasks: [],
+            timingMode: 'specific' as const,
+            resolution: 'pending' as const,
+            rescheduleCount: 0,
         };
 
         render(
@@ -140,6 +148,10 @@ describe('EventModal', () => {
             isCompleted: false,
             createdAt: '2026-01-07T00:00:00.000Z',
             updatedAt: '2026-01-07T00:00:00.000Z',
+            subtasks: [],
+            timingMode: 'specific' as const,
+            resolution: 'pending' as const,
+            rescheduleCount: 0,
         };
 
         rerender(
