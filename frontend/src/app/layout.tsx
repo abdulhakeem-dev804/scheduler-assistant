@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/components/providers";
@@ -18,7 +18,13 @@ export const metadata: Metadata = {
   description: "A modern scheduling and productivity app with calendar, events, and Pomodoro timer",
   keywords: ["scheduler", "calendar", "productivity", "pomodoro", "events"],
   authors: [{ name: "Scheduler Team" }],
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1",
+};
+
+// Next.js 15+ requires viewport to be a separate export
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
 };
 
 export default function RootLayout({
