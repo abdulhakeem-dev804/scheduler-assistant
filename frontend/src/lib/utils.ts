@@ -3,18 +3,36 @@ import { twMerge } from "tailwind-merge";
 import { format, parseISO, startOfWeek, endOfWeek, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth, isToday } from "date-fns";
 
 /**
- * Parse a date string as local time (not UTC).
- * This fixes the timezone issue where parseISO treats strings without timezone as UTC.
- * @param dateString - ISO-like date string (e.g., "2026-01-08T14:00:00")
- * @returns Date object interpreted as local time
+ * Parse a date string and convert to local time for display.
+ * The backend stores dates in UTC. This function converts them back to local time.
+ * @param dateString - ISO date string from the backend
+ * @returns Date object in local time
  */
 export function parseLocalDate(dateString: string): Date {
-  // If the string already has timezone info (Z or +/-), use parseISO
-  if (dateString.includes('Z') || /[+-]\d{2}:\d{2}$/.test(dateString)) {
-    return parseISO(dateString);
+  // Parse the date - this creates a Date object
+  const date = new Date(dateString);
+
+  // If the string has no timezone info (like "2026-01-08T16:00:00"),
+  // new Date() interprets it as local time - which is what we want
+  if (!dateString.includes('Z') && !/[+-]\d{2}:\d{2}$/.test(dateString)) {
+    return date;
   }
-  // Otherwise, use new Date() which interprets as local time
-  return new Date(dateString);
+
+  // If the string has timezone info (like "2026-01-08T16:00:00Z" or "2026-01-08T16:00:00+00:00"),
+  // the Date is in UTC. We need to display it as if it were local time.
+  // This is because the user entered "16:00" local time, but the backend stored it as UTC.
+  // We want to show "16:00" again, not the converted local time.
+
+  // Extract the time components from the UTC date as if they were local
+  const year = date.getUTCFullYear();
+  const month = date.getUTCMonth();
+  const day = date.getUTCDate();
+  const hours = date.getUTCHours();
+  const minutes = date.getUTCMinutes();
+  const seconds = date.getUTCSeconds();
+
+  // Create a new date using these components as local time
+  return new Date(year, month, day, hours, minutes, seconds);
 }
 
 export function cn(...inputs: ClassValue[]) {
