@@ -66,6 +66,24 @@ async def create_event(event_data: EventCreate, db: Session = Depends(get_db)):
             detail="Cannot schedule events in the past"
         )
     
+    # Conflict Detection: Skip if this is an "anytime" task (flexible timing)
+    timing_mode = getattr(event_data, 'timing_mode', None) or 'specific'
+    if timing_mode != 'anytime':
+        # Check for overlapping events (excluding "anytime" events)
+        # Two events overlap if: start1 < end2 AND end1 > start2
+        conflicting_event = db.query(Event).filter(
+            Event.start_date < event_data.end_date,
+            Event.end_date > event_data.start_date,
+            Event.timing_mode != 'anytime',  # Anytime events can overlap
+            Event.is_completed == False  # Ignore completed events
+        ).first()
+        
+        if conflicting_event:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Time conflict with existing event: '{conflicting_event.title}' ({conflicting_event.start_date.strftime('%H:%M')} - {conflicting_event.end_date.strftime('%H:%M')})"
+            )
+    
     event = Event(**event_data.model_dump())
     db.add(event)
     db.commit()
@@ -85,6 +103,28 @@ async def update_event(
         raise HTTPException(status_code=404, detail="Event not found")
     
     update_data = event_data.model_dump(exclude_unset=True)
+    
+    # If times are being updated, check for conflicts
+    new_start = update_data.get('start_date', event.start_date)
+    new_end = update_data.get('end_date', event.end_date)
+    new_timing_mode = update_data.get('timing_mode', event.timing_mode) or 'specific'
+    
+    # Conflict Detection: Skip if this is an "anytime" task
+    if new_timing_mode != 'anytime':
+        conflicting_event = db.query(Event).filter(
+            Event.id != event_id,  # Exclude this event itself
+            Event.start_date < new_end,
+            Event.end_date > new_start,
+            Event.timing_mode != 'anytime',
+            Event.is_completed == False
+        ).first()
+        
+        if conflicting_event:
+            raise HTTPException(
+                status_code=409,
+                detail=f"Time conflict with existing event: '{conflicting_event.title}' ({conflicting_event.start_date.strftime('%H:%M')} - {conflicting_event.end_date.strftime('%H:%M')})"
+            )
+    
     for field, value in update_data.items():
         setattr(event, field, value)
     

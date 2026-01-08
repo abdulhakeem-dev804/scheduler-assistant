@@ -3,9 +3,10 @@
 import { useState, useCallback } from 'react';
 import { Sidebar, Header } from '@/components/layout';
 import { CalendarContainer } from '@/components/calendar';
-import { EventModal } from '@/components/events';
+import { EventModal, ResolutionModal } from '@/components/events';
 import { PomodoroWidget } from '@/components/pomodoro';
 import { UpcomingEvents } from '@/components/widgets';
+import { StatisticsView } from '@/components/dashboard/StatisticsView';
 import {
   useEvents,
   useCreateEvent,
@@ -15,7 +16,7 @@ import {
   useCalendar,
   useSocketSync
 } from '@/hooks';
-import { Event, CreateEventInput, CalendarView } from '@/types';
+import { Event, CreateEventInput, CalendarView, Resolution } from '@/types';
 import { Toaster, toast } from 'sonner';
 
 export default function Home() {
@@ -38,6 +39,7 @@ export default function Home() {
   } = useCalendar();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isResolutionOpen, setIsResolutionOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | undefined>();
 
@@ -58,6 +60,17 @@ export default function Home() {
   }, []);
 
   const handleEventClick = useCallback((event: Event) => {
+    const eventEnd = new Date(event.endDate);
+    const now = new Date();
+
+    // If event is past and not completed, open Resolution Modal
+    if (eventEnd < now && !event.isCompleted) {
+      setSelectedEvent(event);
+      setIsResolutionOpen(true);
+      return;
+    }
+
+    // Otherwise open normal edit modal
     setSelectedEvent(event);
     setDefaultDate(undefined);
     setIsModalOpen(true);
@@ -123,6 +136,36 @@ export default function Home() {
     });
   }, [toggleCompletion, emitEventUpdated]);
 
+  const handleResolve = useCallback((eventId: string, resolution: Resolution, newEndDate?: string) => {
+    const updates: Record<string, unknown> = { resolution };
+
+    if (resolution === 'completed') {
+      updates.isCompleted = true;
+    } else if (resolution === 'rescheduled' && newEndDate) {
+      updates.endDate = newEndDate;
+      // Increment reschedule count would need backend support
+    }
+
+    updateEvent.mutate(
+      { id: eventId, updates: updates as Parameters<typeof updateEvent.mutate>[0]['updates'] },
+      {
+        onSuccess: (updated) => {
+          const messages: Record<Resolution, string> = {
+            pending: 'Event updated',
+            completed: 'Task completed! 🎉',
+            missed: 'Task marked as missed',
+            rescheduled: 'Task rescheduled',
+          };
+          toast.success(messages[resolution]);
+          emitEventUpdated(updated);
+        },
+        onError: (err) => {
+          toast.error(`Failed to update: ${err.message}`);
+        },
+      }
+    );
+  }, [updateEvent, emitEventUpdated]);
+
   return (
     <div className="flex h-screen bg-gradient-to-br from-background via-background to-muted/20">
       {/* Sidebar */}
@@ -145,14 +188,18 @@ export default function Home() {
         <div className="flex-1 flex overflow-hidden">
           {/* Calendar */}
           <main className="flex-1 overflow-auto">
-            <CalendarContainer
-              view={view}
-              currentDate={currentDate}
-              events={events}
-              onDateClick={handleDateClick}
-              onEventClick={handleEventClick}
-              onToggleComplete={handleToggleComplete}
-            />
+            {view === 'stats' ? (
+              <StatisticsView events={events} />
+            ) : (
+              <CalendarContainer
+                view={view}
+                currentDate={currentDate}
+                events={events}
+                onDateClick={handleDateClick}
+                onEventClick={handleEventClick}
+                onToggleComplete={handleToggleComplete}
+              />
+            )}
           </main>
 
           {/* Right Sidebar - Widgets (Hidden on mobile) */}
@@ -171,9 +218,19 @@ export default function Home() {
         defaultDate={defaultDate}
         onSave={handleSaveEvent}
         onDelete={handleDeleteEvent}
+        existingEvents={events}
+      />
+
+      {/* Resolution Modal for Past Events */}
+      <ResolutionModal
+        isOpen={isResolutionOpen}
+        onClose={() => setIsResolutionOpen(false)}
+        event={selectedEvent}
+        onResolve={handleResolve}
       />
 
       <Toaster richColors position="bottom-right" />
     </div>
   );
 }
+

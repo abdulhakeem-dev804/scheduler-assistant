@@ -10,12 +10,12 @@ from app.routers import events, pomodoro
 from app.database import create_db_and_tables
 
 
-# Allowed origins for CORS
+# Allowed origins for CORS - No wildcard when credentials=True
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    "https://violet-dolls-dig.loca.lt",  # Frontend localtunnel
-    "https://scheduler-api.loca.lt",  # Backend localtunnel
-    "*"  # Allow all for development
+    "http://127.0.0.1:3000",
+    "https://scheduler-assist.abdulhakeem.dev",
+    "https://scheduler-api.abdulhakeem.dev",
 ]
 
 # Socket.io server

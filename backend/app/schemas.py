@@ -3,7 +3,7 @@ Pydantic Schemas for API request/response validation
 """
 from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from enum import Enum
 
 
@@ -22,6 +22,26 @@ class PriorityEnum(str, Enum):
     low = "low"
 
 
+class ResolutionEnum(str, Enum):
+    pending = "pending"
+    completed = "completed"
+    missed = "missed"
+    rescheduled = "rescheduled"
+
+
+class TimingModeEnum(str, Enum):
+    specific = "specific"
+    anytime = "anytime"
+    deadline = "deadline"
+
+
+# Subtask Schema
+class Subtask(BaseModel):
+    id: Optional[str] = Field(default=None)  # Auto-generated if not provided
+    title: str
+    completed: bool = False
+
+
 # Event Schemas
 class EventBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=255)
@@ -31,6 +51,8 @@ class EventBase(BaseModel):
     category: CategoryEnum = CategoryEnum.work
     priority: PriorityEnum = PriorityEnum.medium
     is_recurring: bool = False
+    subtasks: List[Subtask] = []
+    timing_mode: TimingModeEnum = TimingModeEnum.specific
 
 
 class EventCreate(EventBase):
@@ -46,11 +68,19 @@ class EventUpdate(BaseModel):
     priority: Optional[PriorityEnum] = None
     is_recurring: Optional[bool] = None
     is_completed: Optional[bool] = None
+    subtasks: Optional[List[Subtask]] = None
+    timing_mode: Optional[TimingModeEnum] = None
+    resolution: Optional[ResolutionEnum] = None
 
 
 class EventResponse(EventBase):
     id: str
     is_completed: bool
+    subtasks: List[Subtask] = []
+    timing_mode: TimingModeEnum = TimingModeEnum.specific  # Default for NULL DB values
+    resolution: ResolutionEnum = ResolutionEnum.pending    # Default for NULL DB values
+    reschedule_count: int = 0
+    original_start_date: Optional[datetime] = None
     created_at: datetime
     updated_at: datetime
 

@@ -163,3 +163,33 @@ def test_filter_events_by_category(client):
     events = response.json()
     assert len(events) == 1
     assert events[0]["title"] == "Work Event"
+
+
+def test_reschedule_event(client):
+    """Test rescheduling an event logic"""
+    # Create event
+    event_data = {
+        "title": "To Reschedule",
+        "start_date": "2026-01-08T09:00:00Z",
+        "end_date": "2026-01-08T10:00:00Z"
+    }
+    create_response = client.post("/api/events/", json=event_data)
+    event_id = create_response.json()["id"]
+    
+    # Reschedule: Update end_date and set resolution to 'rescheduled'
+    new_end_date = "2026-01-09T17:00:00"
+    update_data = {
+        "end_date": new_end_date + "Z", # Send with Z
+        "resolution": "rescheduled"
+    }
+    
+    response = client.put(f"/api/events/{event_id}", json=update_data)
+    
+    assert response.status_code == 200
+    data = response.json()
+    # Backend might return without Z
+    assert data["end_date"].replace('Z', '') == new_end_date
+    assert data["resolution"] == "rescheduled"
+    # Note: reschedule_count might increment if logic is implemented, but schema has default 0.
+    # We won't assert count unless we verified it increments in logic.
+

@@ -8,6 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Calendar, Clock } from 'lucide-react';
+import { EventCountdown } from '@/components/events/EventCountdown';
 
 interface AgendaViewProps {
     events: Event[];
@@ -124,7 +125,13 @@ export function AgendaView({ events, onEventClick, onToggleComplete }: AgendaVie
                                                 </p>
                                             )}
 
-                                            <div className="flex items-center gap-2 mt-2">
+                                            <div className="flex items-center gap-2 mt-2 flex-wrap">
+                                                <EventCountdown
+                                                    startDate={event.startDate}
+                                                    endDate={event.endDate}
+                                                    isCompleted={event.isCompleted}
+                                                    variant="badge"
+                                                />
                                                 <Badge variant="outline" className={cn(colors.bg, colors.text, "border-0")}>
                                                     {event.category}
                                                 </Badge>

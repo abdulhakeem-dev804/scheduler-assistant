@@ -4,7 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { format } from 'date-fns';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import {
     Dialog,
     DialogContent,
@@ -24,38 +24,33 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Event, CreateEventInput, EventCategory, Priority } from '@/types';
-import { Trash2 } from 'lucide-react';
+import { Event, CreateEventInput, EventCategory, Priority, Subtask } from '@/types';
+import { Trash2, Clock, Calendar } from 'lucide-react';
+import { SubtaskList } from './SubtaskList';
+import { SmartTimePicker } from './SmartTimePicker';
+import { SmartDatePicker } from './SmartDatePicker';
+import { EventCountdown } from './EventCountdown';
+import { endOfMonth } from 'date-fns';
 
 const eventSchema = z.object({
     title: z.string().min(1, 'Title is required').max(100, 'Title too long'),
     description: z.string().max(500, 'Description too long').optional(),
-    startDate: z.string(),
-    startTime: z.string(),
-    endDate: z.string(),
-    endTime: z.string(),
+    startDate: z.string().optional(),
+    startTime: z.string().optional(),
+    endDate: z.string().optional(),
+    endTime: z.string().optional(),
     category: z.enum(['work', 'personal', 'health', 'learning', 'finance', 'social']),
     priority: z.enum(['high', 'medium', 'low']),
     isRecurring: z.boolean(),
 }).refine((data) => {
-    // Validate: End datetime must be after start datetime
+    // Only validate if both start and end are provided
+    if (!data.startDate || !data.startTime || !data.endDate || !data.endTime) return true;
     const start = new Date(`${data.startDate}T${data.startTime}`);
     const end = new Date(`${data.endDate}T${data.endTime}`);
     return end > start;
 }, {
     message: "End time must be after start time",
     path: ["endTime"],
-}).refine((data) => {
-    // Validate: Can't schedule in the past (allow today)
-    const start = new Date(`${data.startDate}T${data.startTime}`);
-    const now = new Date();
-    // Allow events starting today or in the future
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
-    return startDay >= today;
-}, {
-    message: "Cannot schedule events in the past",
-    path: ["startDate"],
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -67,6 +62,24 @@ interface EventModalProps {
     defaultDate?: Date;
     onSave: (data: CreateEventInput) => void;
     onDelete?: (id: string) => void;
+    existingEvents?: Event[]; // For conflict detection
+}
+
+// Extract time slots from existing events for conflict visualization
+function getOccupiedSlots(events: Event[], selectedDate: string, excludeEventId?: string) {
+    return events
+        .filter(e => {
+            if (excludeEventId && e.id === excludeEventId) return false;
+            if (e.isCompleted) return false;
+            if (e.timingMode === 'anytime') return false;
+            const eventDate = e.startDate.split('T')[0];
+            return eventDate === selectedDate;
+        })
+        .map(e => ({
+            start: format(new Date(e.startDate), 'HH:mm'),
+            end: format(new Date(e.endDate), 'HH:mm'),
+            title: e.title,
+        }));
 }
 
 export function EventModal({
@@ -76,8 +89,10 @@ export function EventModal({
     defaultDate,
     onSave,
     onDelete,
+    existingEvents = [],
 }: EventModalProps) {
     const isEditing = !!event;
+    const [subtasks, setSubtasks] = useState<Subtask[]>([]);
 
     const getDefaultValues = (): EventFormData => {
         if (event) {
@@ -96,14 +111,14 @@ export function EventModal({
             };
         }
 
-        const date = defaultDate || new Date();
+        // For new events: empty defaults - smart defaults applied on submit
         return {
             title: '',
             description: '',
-            startDate: format(date, 'yyyy-MM-dd'),
-            startTime: format(date, 'HH:mm'),
-            endDate: format(date, 'yyyy-MM-dd'),
-            endTime: format(new Date(date.getTime() + 60 * 60 * 1000), 'HH:mm'),
+            startDate: '',
+            startTime: '',
+            endDate: '',
+            endTime: '',
             category: 'work',
             priority: 'medium',
             isRecurring: false,
@@ -115,18 +130,37 @@ export function EventModal({
         defaultValues: getDefaultValues(),
     });
 
-    // Reset form when modal opens with new event or date
     useEffect(() => {
         if (isOpen) {
             form.reset(getDefaultValues());
+            setSubtasks(event?.subtasks || []);
         }
     }, [isOpen, event?.id, defaultDate]);
 
+    // Watch date values for occupied slots
+    const watchStartDate = form.watch('startDate');
+    const watchEndDate = form.watch('endDate');
+
+    // Get occupied slots for selected dates
+    const startOccupiedSlots = watchStartDate
+        ? getOccupiedSlots(existingEvents, watchStartDate, event?.id)
+        : [];
+    const endOccupiedSlots = watchEndDate
+        ? getOccupiedSlots(existingEvents, watchEndDate, event?.id)
+        : [];
+
     const handleSubmit = (data: EventFormData) => {
-        // Send the local datetime string directly to the backend
-        // The backend will store it as-is, preserving the user's intended time
-        const startISO = `${data.startDate}T${data.startTime}:00`;
-        const endISO = `${data.endDate}T${data.endTime}:00`;
+        const now = new Date();
+        const monthEnd = endOfMonth(now);
+
+        // Smart defaults: current time for start, month end 23:59 for end
+        const finalStartDate = data.startDate || format(now, 'yyyy-MM-dd');
+        const finalStartTime = data.startTime || format(now, 'HH:mm');
+        const finalEndDate = data.endDate || format(monthEnd, 'yyyy-MM-dd');
+        const finalEndTime = data.endTime || '23:59';
+
+        const startISO = `${finalStartDate}T${finalStartTime}:00`;
+        const endISO = `${finalEndDate}T${finalEndTime}:00`;
 
         onSave({
             title: data.title,
@@ -136,6 +170,8 @@ export function EventModal({
             category: data.category as EventCategory,
             priority: data.priority as Priority,
             isRecurring: data.isRecurring,
+            subtasks: subtasks,
+            timingMode: 'specific',
         });
 
         form.reset();
@@ -149,9 +185,27 @@ export function EventModal({
         }
     };
 
+    // Auto-set end date when start date is selected
+    const handleStartDateChange = (date: string) => {
+        form.setValue('startDate', date);
+        if (!form.getValues('endDate')) {
+            form.setValue('endDate', date);
+        }
+    };
+
+    // Auto-set end time 1 hour after start time
+    const handleStartTimeChange = (time: string) => {
+        form.setValue('startTime', time);
+        if (!form.getValues('endTime')) {
+            const [hours, minutes] = time.split(':').map(Number);
+            const endHours = (hours + 1) % 24;
+            form.setValue('endTime', `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+        }
+    };
+
     return (
         <Dialog open={isOpen} onOpenChange={onClose}>
-            <DialogContent className="sm:max-w-[500px]">
+            <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                     <DialogTitle>{isEditing ? 'Edit Event' : 'New Event'}</DialogTitle>
                 </DialogHeader>
@@ -183,11 +237,15 @@ export function EventModal({
                         />
                     </div>
 
-                    {/* Date and Time */}
+                    {/* Date and Time - Smart Pickers */}
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="startDate">Start Date</Label>
-                            <Input type="date" id="startDate" {...form.register('startDate')} />
+                            <Label>Start Date</Label>
+                            <SmartDatePicker
+                                value={form.watch('startDate') || null}
+                                onChange={handleStartDateChange}
+                                label="Start Date"
+                            />
                             {form.formState.errors.startDate && (
                                 <p className="text-sm text-destructive">
                                     {form.formState.errors.startDate.message}
@@ -195,19 +253,45 @@ export function EventModal({
                             )}
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="startTime">Start Time</Label>
-                            <Input type="time" id="startTime" {...form.register('startTime')} />
+                            <Label>Start Time</Label>
+                            <SmartTimePicker
+                                value={form.watch('startTime') || null}
+                                onChange={handleStartTimeChange}
+                                label="start"
+                                selectedDate={form.watch('startDate') || new Date().toISOString().split('T')[0]}
+                                occupiedSlots={startOccupiedSlots}
+                            />
+                            {form.formState.errors.startTime && (
+                                <p className="text-sm text-destructive">
+                                    {form.formState.errors.startTime.message}
+                                </p>
+                            )}
                         </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label htmlFor="endDate">End Date</Label>
-                            <Input type="date" id="endDate" {...form.register('endDate')} />
+                            <Label>End Date</Label>
+                            <SmartDatePicker
+                                value={form.watch('endDate') || null}
+                                onChange={(date) => form.setValue('endDate', date)}
+                                label="End Date"
+                            />
+                            {form.formState.errors.endDate && (
+                                <p className="text-sm text-destructive">
+                                    {form.formState.errors.endDate.message}
+                                </p>
+                            )}
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="endTime">End Time</Label>
-                            <Input type="time" id="endTime" {...form.register('endTime')} />
+                            <Label>End Time</Label>
+                            <SmartTimePicker
+                                value={form.watch('endTime') || null}
+                                onChange={(time) => form.setValue('endTime', time)}
+                                label="end"
+                                selectedDate={form.watch('endDate') || new Date().toISOString().split('T')[0]}
+                                occupiedSlots={endOccupiedSlots}
+                            />
                             {form.formState.errors.endTime && (
                                 <p className="text-sm text-destructive">
                                     {form.formState.errors.endTime.message}
@@ -215,6 +299,16 @@ export function EventModal({
                             )}
                         </div>
                     </div>
+
+                    {/* Live Countdown Timer */}
+                    {(form.watch('startDate') && form.watch('startTime') && form.watch('endDate') && form.watch('endTime')) && (
+                        <EventCountdown
+                            startDate={`${form.watch('startDate')}T${form.watch('startTime')}:00`}
+                            endDate={`${form.watch('endDate')}T${form.watch('endTime')}:00`}
+                            isCompleted={event?.isCompleted}
+                            variant="full"
+                        />
+                    )}
 
                     {/* Category and Priority */}
                     <div className="grid grid-cols-2 gap-4">
@@ -268,6 +362,9 @@ export function EventModal({
                             Recurring event
                         </Label>
                     </div>
+
+                    {/* Subtasks */}
+                    <SubtaskList subtasks={subtasks} onChange={setSubtasks} />
 
                     <DialogFooter className="flex gap-2">
                         {isEditing && onDelete && (

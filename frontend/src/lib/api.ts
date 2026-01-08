@@ -107,11 +107,13 @@ class ApiClient {
                 category: data.category,
                 priority: data.priority,
                 is_recurring: data.isRecurring,
+                timing_mode: data.timingMode || 'specific',
+                subtasks: data.subtasks || [],
             },
         });
     }
 
-    async updateEvent(id: string, data: Partial<CreateEventInput> & { isCompleted?: boolean }) {
+    async updateEvent(id: string, data: Partial<CreateEventInput> & { isCompleted?: boolean; resolution?: string }) {
         const body: Record<string, unknown> = {};
         if (data.title !== undefined) body.title = data.title;
         if (data.description !== undefined) body.description = data.description;
@@ -121,6 +123,9 @@ class ApiClient {
         if (data.priority !== undefined) body.priority = data.priority;
         if (data.isRecurring !== undefined) body.is_recurring = data.isRecurring;
         if (data.isCompleted !== undefined) body.is_completed = data.isCompleted;
+        if (data.timingMode !== undefined) body.timing_mode = data.timingMode;
+        if (data.subtasks !== undefined) body.subtasks = data.subtasks;
+        if (data.resolution !== undefined) body.resolution = data.resolution;
 
         return this.request<Event>(`/api/events/${id}`, {
             method: 'PUT',
@@ -165,6 +170,8 @@ interface CreateEventInput {
     category: string;
     priority: string;
     isRecurring?: boolean;
+    timingMode?: 'specific' | 'anytime' | 'deadline';
+    subtasks?: Array<{ id?: string; title: string; completed: boolean }>;
 }
 
 export const apiClient = new ApiClient(API_BASE_URL);

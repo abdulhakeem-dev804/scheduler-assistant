@@ -1,7 +1,7 @@
 """
 SQLAlchemy Models
 """
-from sqlalchemy import Column, String, Boolean, DateTime, Enum
+from sqlalchemy import Column, String, Boolean, DateTime, Enum, Integer, JSON
 from sqlalchemy.sql import func
 from app.database import Base
 import enum
@@ -23,6 +23,19 @@ class PriorityEnum(str, enum.Enum):
     low = "low"
 
 
+class ResolutionEnum(str, enum.Enum):
+    pending = "pending"
+    completed = "completed"
+    missed = "missed"
+    rescheduled = "rescheduled"
+
+
+class TimingModeEnum(str, enum.Enum):
+    specific = "specific"    # Exact start/end time
+    anytime = "anytime"      # Flexible - do anytime before deadline
+    deadline = "deadline"    # Only end date matters
+
+
 class Event(Base):
     __tablename__ = "events"
 
@@ -35,6 +48,14 @@ class Event(Base):
     priority = Column(Enum(PriorityEnum), default=PriorityEnum.medium)
     is_recurring = Column(Boolean, default=False)
     is_completed = Column(Boolean, default=False)
+    
+    # Smart Planner fields
+    subtasks = Column(JSON, default=list)  # [{id, title, completed}]
+    timing_mode = Column(Enum(TimingModeEnum), default=TimingModeEnum.specific)
+    resolution = Column(Enum(ResolutionEnum), default=ResolutionEnum.pending)
+    reschedule_count = Column(Integer, default=0)
+    original_start_date = Column(DateTime(timezone=True), nullable=True)
+    
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
 

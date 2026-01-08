@@ -7,6 +7,7 @@ import { Event } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Clock } from 'lucide-react';
+import { CountdownBadge } from '@/components/events/CountdownTimer';
 
 interface UpcomingEventsProps {
     events: Event[];
@@ -68,6 +69,7 @@ export function UpcomingEvents({ events, onEventClick, maxItems = 5 }: UpcomingE
                                                 {getTimeLabel(event.startDate)}
                                             </p>
                                         </div>
+                                        <CountdownBadge targetDate={event.startDate} />
                                     </div>
                                 );
                             })}
@@ -78,3 +80,4 @@ export function UpcomingEvents({ events, onEventClick, maxItems = 5 }: UpcomingE
         </Card>
     );
 }
+

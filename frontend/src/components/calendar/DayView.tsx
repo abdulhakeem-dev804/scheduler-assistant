@@ -5,6 +5,7 @@ import { format, isSameDay, getHours, getMinutes } from 'date-fns';
 import { cn, isToday, categoryColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { EventCountdown } from '@/components/events/EventCountdown';
 
 interface DayViewProps {
     currentDate: Date;
@@ -113,6 +114,15 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
                                     <div className="text-sm opacity-75 mt-1">
                                         {format(parseLocalDate(event.startDate), 'h:mm a')} - {format(parseLocalDate(event.endDate), 'h:mm a')}
                                     </div>
+                                    {height > 60 && (
+                                        <EventCountdown
+                                            startDate={event.startDate}
+                                            endDate={event.endDate}
+                                            isCompleted={event.isCompleted}
+                                            variant="compact"
+                                            className="mt-1"
+                                        />
+                                    )}
                                     {event.description && height > 80 && (
                                         <div className="text-sm opacity-60 mt-2 line-clamp-2">
                                             {event.description}
