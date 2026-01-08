@@ -14,7 +14,7 @@ function getApiBaseUrl(): string {
         return 'http://localhost:8000';
     }
 
-    const { hostname, protocol } = window.location;
+    const { hostname } = window.location;
 
     // If accessed via localhost, use localhost:8000
     if (hostname === 'localhost' || hostname === '127.0.0.1') {

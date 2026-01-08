@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import { useCalendar } from '@/hooks/useCalendar';
-import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, startOfToday } from 'date-fns';
+import { addMonths, subMonths, subWeeks, addDays, startOfToday } from 'date-fns';
 
 describe('useCalendar', () => {
     beforeEach(() => {

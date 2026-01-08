@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format, parseISO, isToday as isTodayFn, isTomorrow, addDays, isBefore, isAfter } from 'date-fns';
+import { format, parseISO, isToday as isTodayFn, isTomorrow, isBefore } from 'date-fns';
 import { cn, categoryColors, priorityColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { Badge } from '@/components/ui/badge';

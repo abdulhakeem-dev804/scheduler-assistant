@@ -110,11 +110,11 @@ def test_delete_event(client):
 
 def test_toggle_event_completion(client):
     """Test toggling event completion status"""
-    # Create event
+    # Create event with a PAST date (so toggle-complete validation passes)
     event_data = {
         "title": "Toggle Test",
-        "start_date": "2026-01-08T09:00:00Z",
-        "end_date": "2026-01-08T10:00:00Z"
+        "start_date": "2025-01-01T09:00:00Z",  # Past date
+        "end_date": "2025-01-01T10:00:00Z"
     }
     create_response = client.post("/api/events/", json=event_data)
     event_id = create_response.json()["id"]
