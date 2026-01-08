@@ -11,6 +11,7 @@ from app.database import create_db_and_tables
 
 
 # Allowed origins for CORS - No wildcard when credentials=True
+# Forced redeploy check for CORS
 ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",

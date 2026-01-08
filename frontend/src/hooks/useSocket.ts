@@ -26,7 +26,7 @@ function getWsUrl(): string {
         return `http://${hostname}:8000`;
     }
 
-    return 'https://scheduler-api.loca.lt';
+    return 'https://scheduler-api.abdulhakeem.dev';
 }
 
 const WS_URL = getWsUrl();
