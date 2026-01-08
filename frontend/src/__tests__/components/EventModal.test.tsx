@@ -123,6 +123,27 @@ describe('EventModal', () => {
         expect(mockOnClose).toHaveBeenCalled();
     });
 
+    it('pre-fills start date when defaultDate is provided (calendar click)', () => {
+        const clickedDate = new Date('2026-01-15T00:00:00');
+
+        render(
+            <EventModal
+                isOpen={true}
+                onClose={mockOnClose}
+                onSave={mockOnSave}
+                defaultDate={clickedDate}
+            />,
+            { wrapper: createWrapper() }
+        );
+
+        // The date picker should show the clicked date formatted as "Jan 15, 2026"
+        expect(screen.getByText('New Event')).toBeInTheDocument();
+        // SmartDatePicker displays date as "MMM d, yyyy" format
+        // Both start and end date are pre-filled with the clicked date
+        const dateElements = screen.getAllByText('Jan 15, 2026');
+        expect(dateElements.length).toBeGreaterThanOrEqual(2); // Start and End date
+    });
+
     it('shows delete button only when editing', () => {
         const { rerender } = render(
             <EventModal

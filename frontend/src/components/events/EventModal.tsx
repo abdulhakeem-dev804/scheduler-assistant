@@ -111,13 +111,14 @@ export function EventModal({
             };
         }
 
-        // For new events: empty defaults - smart defaults applied on submit
+        // For new events: use defaultDate if provided (from calendar click)
+        const clickedDate = defaultDate ? format(defaultDate, 'yyyy-MM-dd') : '';
         return {
             title: '',
             description: '',
-            startDate: '',
+            startDate: clickedDate,
             startTime: '',
-            endDate: '',
+            endDate: clickedDate,
             endTime: '',
             category: 'work',
             priority: 'medium',
