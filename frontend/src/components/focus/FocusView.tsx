@@ -52,25 +52,18 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
                     <Badge variant="outline" className="px-4 py-1 text-sm uppercase tracking-widest border-primary/50 text-primary">
                         Current Focus
                     </Badge>
-                    <h1 className="text-4xl lg:text-5xl font-extrabold tracking-tight bg-gradient-to-r from-foreground to-muted-foreground bg-clip-text text-transparent">
+                    <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground/90">
                         {focusTask.title}
                     </h1>
                 </div>
 
                 {/* Main Timer Display */}
-                <div className="flex justify-center py-8">
-                    {/* Reuse EventCountdown but wrap it to look hero-sized if component allows custom styling or just use full variant? 
-                         EventCountdown 'full' variant is decent but maybe we want BIGGER. 
-                         Actually, let's use the 'full' variant for now and verify if it's "beautiful" enough.
-                         User asked for "beautiful time counter... main focus would be on timer".
-                         The 'full' variant has circular progress etc if implemented well. 
-                         Let's assume EventCountdown is capable or wrap it in a scaling container.
-                     */}
-                    <div className="scale-125 transform transition-transform">
+                <div className="flex justify-center py-12">
+                    <div className="scale-150 transform transition-transform origin-center">
                         <EventCountdown
                             startDate={focusTask.startDate}
                             endDate={focusTask.endDate}
-                            variant="full"
+                            variant="badge"
                             dailyStartTime={focusTask.dailyStartTime}
                             dailyEndTime={focusTask.dailyEndTime}
                         />

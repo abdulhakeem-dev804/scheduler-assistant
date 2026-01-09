@@ -95,6 +95,7 @@ export function Header({
                     className="hidden md:block"
                 >
                     <TabsList className="bg-muted/50">
+                        <TabsTrigger value="focus" className="text-xs lg:text-sm">Focus</TabsTrigger>
                         <TabsTrigger value="month" className="text-xs lg:text-sm">Month</TabsTrigger>
                         <TabsTrigger value="week" className="text-xs lg:text-sm">Week</TabsTrigger>
                         <TabsTrigger value="day" className="text-xs lg:text-sm">Day</TabsTrigger>
