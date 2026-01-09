@@ -4,8 +4,6 @@ import { useState, useCallback } from 'react';
 import { Sidebar, Header } from '@/components/layout';
 import { CalendarContainer } from '@/components/calendar';
 import { EventModal, ResolutionModal } from '@/components/events';
-import { PomodoroWidget } from '@/components/pomodoro';
-import { UpcomingEvents } from '@/components/widgets';
 import { StatisticsView } from '@/components/dashboard/StatisticsView';
 import {
   useEvents,
@@ -202,11 +200,7 @@ export default function Home() {
             )}
           </main>
 
-          {/* Right Sidebar - Widgets (Hidden on mobile) */}
-          <aside className="hidden xl:block w-80 p-4 space-y-4 overflow-y-auto border-l border-border/50 bg-card/30">
-            <PomodoroWidget />
-            <UpcomingEvents events={events} onEventClick={handleEventClick} />
-          </aside>
+          {/* Right Sidebar - Removed as per user request */}
         </div>
       </div>
 
