@@ -161,6 +161,7 @@ export function Header({
                     className="w-full"
                 >
                     <TabsList className="w-full bg-muted/50">
+                        <TabsTrigger value="focus" className="flex-1 text-xs">Focus</TabsTrigger>
                         <TabsTrigger value="month" className="flex-1 text-xs">Month</TabsTrigger>
                         <TabsTrigger value="week" className="flex-1 text-xs">Week</TabsTrigger>
                         <TabsTrigger value="day" className="flex-1 text-xs">Day</TabsTrigger>
