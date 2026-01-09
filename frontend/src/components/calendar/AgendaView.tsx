@@ -27,7 +27,19 @@ export function AgendaView({ events, onEventClick, onToggleComplete }: AgendaVie
         const now = new Date();
         const upcoming = events
             .filter((e) => !isBefore(parseLocalDate(e.endDate), now))
-            .sort((a, b) => parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime());
+            .sort((a, b) => {
+                // Priority sorting: High > Medium > Low
+                const priorityWeight = { high: 3, medium: 2, low: 1 };
+                const weightA = priorityWeight[a.priority] || 0;
+                const weightB = priorityWeight[b.priority] || 0;
+
+                if (weightA !== weightB) {
+                    return weightB - weightA; // Descending order of priority
+                }
+
+                // Secondary sort: Start time (ascending)
+                return parseLocalDate(a.startDate).getTime() - parseLocalDate(b.startDate).getTime();
+            });
 
         const groups: GroupedEvents[] = [];
         const dateMap = new Map<string, Event[]>();
