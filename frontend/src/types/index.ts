@@ -57,7 +57,7 @@ export interface UpdateEventInput extends Partial<CreateEventInput> {
 }
 
 // Calendar types
-export type CalendarView = 'month' | 'week' | 'day' | 'agenda' | 'stats';
+export type CalendarView = 'focus' | 'month' | 'week' | 'day' | 'agenda' | 'stats';
 
 export interface CalendarState {
     currentDate: Date;

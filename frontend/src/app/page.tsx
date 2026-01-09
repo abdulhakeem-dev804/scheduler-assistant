@@ -5,6 +5,7 @@ import { Sidebar, Header } from '@/components/layout';
 import { CalendarContainer } from '@/components/calendar';
 import { EventModal, ResolutionModal } from '@/components/events';
 import { StatisticsView } from '@/components/dashboard/StatisticsView';
+import { FocusView } from '@/components/focus/FocusView';
 import {
   useEvents,
   useCreateEvent,
@@ -186,7 +187,9 @@ export default function Home() {
         <div className="flex-1 flex overflow-hidden">
           {/* Calendar */}
           <main className="flex-1 overflow-auto">
-            {view === 'stats' ? (
+            {view === 'focus' ? (
+              <FocusView events={events} onToggleComplete={handleToggleComplete} />
+            ) : view === 'stats' ? (
               <StatisticsView events={events} />
             ) : (
               <CalendarContainer

@@ -4,7 +4,7 @@ import { useState, useCallback } from 'react';
 import { addMonths, subMonths, addWeeks, subWeeks, addDays, subDays, startOfToday } from 'date-fns';
 import { CalendarView, CalendarState } from '@/types';
 
-export function useCalendar(initialView: CalendarView = 'month') {
+export function useCalendar(initialView: CalendarView = 'focus') {
     const [state, setState] = useState<CalendarState>({
         currentDate: startOfToday(),
         selectedDate: null,
