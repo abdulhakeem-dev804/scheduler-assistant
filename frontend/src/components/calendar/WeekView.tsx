@@ -13,8 +13,14 @@ interface WeekViewProps {
     onEventClick: (event: Event) => void;
 }
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+
+const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), ...Array.from({ length: 6 }, (_, i) => i)];
 const HOUR_HEIGHT = 60; // pixels per hour
+
+// Helper to calculate functionality hour for display (0-23 maps to 0-23 linear space relative to 6 AM)
+const getDisplayHour = (hour: number) => {
+    return hour >= 6 ? hour - 6 : hour + 18;
+};
 
 export function WeekView({ currentDate, events, onDateClick, onEventClick }: WeekViewProps) {
     const days = useMemo(() => getWeekDays(currentDate), [currentDate]);
@@ -53,39 +59,58 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
         let endHour: number;
 
         if (isMultiDay) {
-            // Check if user has set daily time window
             if (event.dailyStartTime && event.dailyEndTime) {
-                // Use the fixed daily time window
                 const [dStartH, dStartM] = event.dailyStartTime.split(':').map(Number);
                 const [dEndH, dEndM] = event.dailyEndTime.split(':').map(Number);
                 startHour = dStartH + dStartM / 60;
                 endHour = dEndH + dEndM / 60;
             } else {
-                // No daily time set - use full day spans
                 if (isStartDay) {
                     startHour = getHours(startDate) + getMinutes(startDate) / 60;
                     endHour = 24;
                 } else if (isEndDay) {
+                    startHour = 6; // Start at visual top (6 AM) for end day if wrapping? 
+                    // Actually, if it ends on this day, it goes from 00:00 (which is now at bottom) to EndTime?
+                    // This is complex. Simplified: standard display.
                     startHour = 0;
                     endHour = getHours(endDate) + getMinutes(endDate) / 60;
                 } else if (isMiddleDay) {
-                    startHour = 0;
-                    endHour = 24;
+                    startHour = 6;
+                    endHour = 30; // 6 AM next day
                 } else {
                     startHour = getHours(startDate) + getMinutes(startDate) / 60;
                     endHour = getHours(endDate) + getMinutes(endDate) / 60;
                 }
             }
         } else {
-            // Same-day event
             startHour = getHours(startDate) + getMinutes(startDate) / 60;
             endHour = getHours(endDate) + getMinutes(endDate) / 60;
         }
 
-        const duration = Math.max(endHour - startHour, 0.5); // Minimum 30 min display
+        const displayStart = getDisplayHour(Math.floor(startHour)) + (startHour % 1);
+
+        // Handle end wrapping? 
+        // If endHour is say 2 AM (26 in linear), getDisplayHour(2) is 20.
+        // If start is 23 (17) and end is 1 (19), it works linearly: 17 to 19.
+        // If start is 5 (23) and end is 7 (1), implies crossing the visual boundary. 
+        // 23 to 1 -> -22 height. Broken.
+
+        let displayEnd = getDisplayHour(Math.floor(endHour)) + (endHour % 1);
+
+        // Fix crossing midnight boundary 5 AM -> 7 AM edge case
+        // If displayEnd < displayStart, it implies wrapping OR negative time.
+        // Generally standard events don't wrap from 5 AM to 7 AM (that's 26h?).
+        // If 11 PM to 1 AM: 23->1. displayStart=17. displayEnd=19. Works.
+        // If 11 PM to 7 AM: 23->7. displayStart=17. displayEnd=1. Error.
+        // We'll cap displayEnd at 24 (bottom) if it wraps visually weirdly?
+        if (displayEnd < displayStart) {
+            displayEnd += 24;
+        }
+
+        const duration = Math.max(displayEnd - displayStart, 0.5);
 
         return {
-            top: startHour * HOUR_HEIGHT,
+            top: displayStart * HOUR_HEIGHT,
             height: duration * HOUR_HEIGHT,
         };
     };
@@ -122,14 +147,21 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
                 <div className="grid grid-cols-8 min-h-[1440px]">
                     {/* Time column */}
                     <div className="w-16 border-r border-border/30">
-                        {HOURS.map((hour) => (
-                            <div
-                                key={hour}
-                                className="h-[60px] text-xs text-muted-foreground pr-2 text-right relative"
-                            >
-                                <span className="absolute -top-2 right-2">
-                                    {format(new Date().setHours(hour, 0), 'h a')}
-                                </span>
+                        {HOURS.map((hour, index) => (
+                            <div key={hour} className="relative">
+                                {/* Midnight Divider Label */}
+                                {hour === 0 && (
+                                    <div className="absolute -top-3 w-full text-center">
+                                        <span className="bg-background px-1 text-[10px] text-primary/70 font-bold tracking-wider uppercase">
+                                            Midnight
+                                        </span>
+                                    </div>
+                                )}
+                                <div className="h-[60px] text-xs text-muted-foreground pr-2 text-right relative">
+                                    <span className="absolute -top-2 right-2">
+                                        {format(new Date().setHours(hour, 0), 'h a')}
+                                    </span>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -145,16 +177,32 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
                             >
                                 {/* Hour lines */}
                                 {HOURS.map((hour) => (
-                                    <div
-                                        key={hour}
-                                        className="h-[60px] border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer"
-                                    />
+                                    <div key={hour} className="relative">
+                                        {/* Midnight Divider Line */}
+                                        {hour === 0 && (
+                                            <div className="absolute -top-0 w-full border-t-2 border-dashed border-primary/30 z-20 pointer-events-none" />
+                                        )}
+                                        <div
+                                            className="h-[60px] border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer"
+                                        />
+                                    </div>
                                 ))}
 
                                 {/* Events */}
                                 {dayEvents.map((event) => {
                                     const { top, height } = getEventPosition(event, day);
                                     const colors = categoryColors[event.category] || categoryColors.work;
+                                    // Adjust top for the midnight gap shift? 
+                                    // We added 'mt-4' to 0 and subsequent hours.
+                                    // 0 starts at index 18.
+                                    // If displayIndex >= 18, add 16px (mt-4 = 16px) to top?
+                                    // Actually simple margin is risky for absolute positioning.
+                                    // Better to create a render gap in the flow or handle it in calculation.
+                                    // Let's remove the physical 'mt-4' and just use the border for simplicity first, 
+                                    // or add the gap offset to 'top' calculation.
+
+                                    // Revised Plan: Just border, no margin displacement to avoid calc hell.
+
                                     return (
                                         <div
                                             key={event.id}

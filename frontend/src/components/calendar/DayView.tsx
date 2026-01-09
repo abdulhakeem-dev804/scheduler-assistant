@@ -14,8 +14,14 @@ interface DayViewProps {
     onEventClick: (event: Event) => void;
 }
 
-const HOURS = Array.from({ length: 24 }, (_, i) => i);
+
+const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), ...Array.from({ length: 6 }, (_, i) => i)];
 const HOUR_HEIGHT = 80; // pixels per hour
+
+// Helper for display hour calculation
+const getDisplayHour = (hour: number) => {
+    return hour >= 6 ? hour - 6 : hour + 18;
+};
 
 export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayViewProps) {
     const dayEvents = useMemo(() => {
@@ -81,10 +87,18 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
             endHour = getHours(endDate) + getMinutes(endDate) / 60;
         }
 
-        const duration = Math.max(endHour - startHour, 0.5);
+        const displayStart = getDisplayHour(Math.floor(startHour)) + (startHour % 1);
+        let displayEnd = getDisplayHour(Math.floor(endHour)) + (endHour % 1);
+
+        // Handle visual wrapping check (e.g. 11 PM to 1 AM is valid linear descent)
+        if (displayEnd < displayStart) {
+            displayEnd += 24;
+        }
+
+        const duration = Math.max(displayEnd - displayStart, 0.5);
 
         return {
-            top: startHour * HOUR_HEIGHT,
+            top: displayStart * HOUR_HEIGHT,
             height: duration * HOUR_HEIGHT,
         };
     };
@@ -116,11 +130,20 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
                     {/* Time column */}
                     <div className="border-r border-border/30">
                         {HOURS.map((hour) => (
-                            <div
-                                key={hour}
-                                className="h-[80px] text-xs text-muted-foreground pr-3 text-right flex items-start justify-end pt-0"
-                            >
-                                {format(new Date().setHours(hour, 0), 'h a')}
+                            <div key={hour} className="relative">
+                                {/* Midnight Divider Label */}
+                                {hour === 0 && (
+                                    <div className="absolute -top-3 w-full text-center">
+                                        <span className="bg-background px-1 text-[10px] text-primary/70 font-bold tracking-wider uppercase">
+                                            Midnight
+                                        </span>
+                                    </div>
+                                )}
+                                <div
+                                    className="h-[80px] text-xs text-muted-foreground pr-3 text-right flex items-start justify-end pt-0"
+                                >
+                                    {format(new Date().setHours(hour, 0), 'h a')}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -129,14 +152,19 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
                     <div className="relative">
                         {/* Hour slots */}
                         {HOURS.map((hour) => (
-                            <div
-                                key={hour}
-                                className="h-[80px] border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer group"
-                                onClick={() => onTimeClick(currentDate, hour)}
-                            >
-                                <div className="h-1/2 border-b border-border/10" />
-                                <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground p-2">
-                                    + Add event
+                            <div key={hour} className="relative">
+                                {/* Midnight Divider Line */}
+                                {hour === 0 && (
+                                    <div className="absolute -top-0 w-full border-t-2 border-dashed border-primary/30 z-20 pointer-events-none" />
+                                )}
+                                <div
+                                    className="h-[80px] border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer group"
+                                    onClick={() => onTimeClick(currentDate, hour)}
+                                >
+                                    <div className="h-1/2 border-b border-border/10" />
+                                    <div className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-muted-foreground p-2">
+                                        + Add event
+                                    </div>
                                 </div>
                             </div>
                         ))}
