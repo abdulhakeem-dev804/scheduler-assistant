@@ -56,6 +56,10 @@ class Event(Base):
     reschedule_count = Column(Integer, default=0)
     original_start_date = Column(DateTime(timezone=True), nullable=True)
     
+    # Daily time control for multi-day events
+    daily_start_time = Column(String(5), nullable=True)  # "HH:mm" format, e.g., "14:00"
+    daily_end_time = Column(String(5), nullable=True)    # "HH:mm" format, e.g., "18:00"
+    
     created_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
     updated_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"), onupdate=func.now())
 

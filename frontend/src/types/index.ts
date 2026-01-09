@@ -26,6 +26,9 @@ export interface Event {
     resolution: Resolution;
     rescheduleCount: number;
     originalStartDate?: string;
+    // Daily time control for multi-day events
+    dailyStartTime?: string;  // "HH:mm" format
+    dailyEndTime?: string;    // "HH:mm" format
     createdAt: string;
     updatedAt: string;
 }
@@ -44,6 +47,8 @@ export interface CreateEventInput {
     isRecurring?: boolean;
     subtasks?: Subtask[];
     timingMode?: TimingMode;
+    dailyStartTime?: string;  // "HH:mm" format
+    dailyEndTime?: string;    // "HH:mm" format
 }
 
 export interface UpdateEventInput extends Partial<CreateEventInput> {

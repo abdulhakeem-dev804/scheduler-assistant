@@ -53,6 +53,8 @@ class EventBase(BaseModel):
     is_recurring: bool = False
     subtasks: List[Subtask] = []
     timing_mode: TimingModeEnum = TimingModeEnum.specific
+    daily_start_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")  # "HH:mm" format
+    daily_end_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")    # "HH:mm" format
 
 
 class EventCreate(EventBase):
@@ -71,6 +73,8 @@ class EventUpdate(BaseModel):
     subtasks: Optional[List[Subtask]] = None
     timing_mode: Optional[TimingModeEnum] = None
     resolution: Optional[ResolutionEnum] = None
+    daily_start_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
+    daily_end_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
 
 
 class EventResponse(EventBase):
@@ -81,6 +85,8 @@ class EventResponse(EventBase):
     resolution: ResolutionEnum = ResolutionEnum.pending    # Default for NULL DB values
     reschedule_count: int = 0
     original_start_date: Optional[datetime] = None
+    daily_start_time: Optional[str] = None
+    daily_end_time: Optional[str] = None
     created_at: Optional[datetime] = Field(default=None)
     updated_at: Optional[datetime] = Field(default=None)
 

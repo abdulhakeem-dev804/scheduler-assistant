@@ -42,6 +42,9 @@ const eventSchema = z.object({
     category: z.enum(['work', 'personal', 'health', 'learning', 'finance', 'social']),
     priority: z.enum(['high', 'medium', 'low']),
     isRecurring: z.boolean(),
+    useDailyTime: z.boolean(),  // Toggle for daily time control
+    dailyStartTime: z.string().optional(),  // "HH:mm" format
+    dailyEndTime: z.string().optional(),    // "HH:mm" format
 }).refine((data) => {
     // Only validate if both start and end are provided
     if (!data.startDate || !data.startTime || !data.endDate || !data.endTime) return true;
@@ -122,6 +125,9 @@ export function EventModal({
                 category: event.category,
                 priority: event.priority,
                 isRecurring: event.isRecurring,
+                useDailyTime: !!(event.dailyStartTime && event.dailyEndTime),
+                dailyStartTime: event.dailyStartTime || '',
+                dailyEndTime: event.dailyEndTime || '',
             };
         }
 
@@ -137,6 +143,9 @@ export function EventModal({
             category: 'work',
             priority: 'medium',
             isRecurring: false,
+            useDailyTime: false,
+            dailyStartTime: '',
+            dailyEndTime: '',
         };
     };
 
@@ -187,6 +196,9 @@ export function EventModal({
             isRecurring: data.isRecurring,
             subtasks: subtasks,
             timingMode: 'specific',
+            // Only include daily times if toggle is enabled and times are set
+            dailyStartTime: data.useDailyTime && data.dailyStartTime ? data.dailyStartTime : undefined,
+            dailyEndTime: data.useDailyTime && data.dailyEndTime ? data.dailyEndTime : undefined,
         });
 
         form.reset();
@@ -314,6 +326,63 @@ export function EventModal({
                             )}
                         </div>
                     </div>
+
+                    {/* Daily Time Control - Only show for multi-day events */}
+                    {form.watch('startDate') && form.watch('endDate') &&
+                        form.watch('startDate') !== form.watch('endDate') && (
+                            <div className="space-y-3 p-3 rounded-lg bg-muted/30 border border-border/50">
+                                <div className="flex items-center space-x-2">
+                                    <Checkbox
+                                        id="useDailyTime"
+                                        checked={form.watch('useDailyTime')}
+                                        onCheckedChange={(checked) =>
+                                            form.setValue('useDailyTime', checked === true)
+                                        }
+                                    />
+                                    <Label htmlFor="useDailyTime" className="cursor-pointer text-sm">
+                                        Use specific daily time window
+                                    </Label>
+                                </div>
+
+                                {form.watch('useDailyTime') && (
+                                    <div className="grid grid-cols-2 gap-4 mt-2">
+                                        <div className="space-y-1">
+                                            <Label className="text-xs text-muted-foreground">Daily Start</Label>
+                                            <SmartTimePicker
+                                                value={form.watch('dailyStartTime') || null}
+                                                onChange={(time) => {
+                                                    form.setValue('dailyStartTime', time);
+                                                    // Auto-set end time 4 hours later if not set
+                                                    if (!form.getValues('dailyEndTime')) {
+                                                        const [hours, minutes] = time.split(':').map(Number);
+                                                        const endHours = (hours + 4) % 24;
+                                                        form.setValue('dailyEndTime', `${endHours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`);
+                                                    }
+                                                }}
+                                                label="start"
+                                                selectedDate={form.watch('startDate') || new Date().toISOString().split('T')[0]}
+                                            />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <Label className="text-xs text-muted-foreground">Daily End</Label>
+                                            <SmartTimePicker
+                                                value={form.watch('dailyEndTime') || null}
+                                                onChange={(time) => form.setValue('dailyEndTime', time)}
+                                                label="end"
+                                                selectedDate={form.watch('startDate') || new Date().toISOString().split('T')[0]}
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+
+                                <p className="text-xs text-muted-foreground">
+                                    {form.watch('useDailyTime')
+                                        ? 'Event will display during this time window each day'
+                                        : 'Event will span full days on the calendar'
+                                    }
+                                </p>
+                            </div>
+                        )}
 
                     {/* Live Countdown Timer */}
                     {(form.watch('startDate') && form.watch('startTime') && form.watch('endDate') && form.watch('endTime')) && (

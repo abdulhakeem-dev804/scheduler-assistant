@@ -53,22 +53,28 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
         let endHour: number;
 
         if (isMultiDay) {
-            if (isStartDay) {
-                // On start day: show from start time to end of day (24:00)
-                startHour = getHours(startDate) + getMinutes(startDate) / 60;
-                endHour = 24;
-            } else if (isEndDay) {
-                // On end day: show from midnight to end time
-                startHour = 0;
-                endHour = getHours(endDate) + getMinutes(endDate) / 60;
-            } else if (isMiddleDay) {
-                // On middle days: show full day
-                startHour = 0;
-                endHour = 24;
+            // Check if user has set daily time window
+            if (event.dailyStartTime && event.dailyEndTime) {
+                // Use the fixed daily time window
+                const [dStartH, dStartM] = event.dailyStartTime.split(':').map(Number);
+                const [dEndH, dEndM] = event.dailyEndTime.split(':').map(Number);
+                startHour = dStartH + dStartM / 60;
+                endHour = dEndH + dEndM / 60;
             } else {
-                // Fallback
-                startHour = getHours(startDate) + getMinutes(startDate) / 60;
-                endHour = getHours(endDate) + getMinutes(endDate) / 60;
+                // No daily time set - use full day spans
+                if (isStartDay) {
+                    startHour = getHours(startDate) + getMinutes(startDate) / 60;
+                    endHour = 24;
+                } else if (isEndDay) {
+                    startHour = 0;
+                    endHour = getHours(endDate) + getMinutes(endDate) / 60;
+                } else if (isMiddleDay) {
+                    startHour = 0;
+                    endHour = 24;
+                } else {
+                    startHour = getHours(startDate) + getMinutes(startDate) / 60;
+                    endHour = getHours(endDate) + getMinutes(endDate) / 60;
+                }
             }
         } else {
             // Same-day event
