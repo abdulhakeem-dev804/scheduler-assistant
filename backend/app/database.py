@@ -65,6 +65,16 @@ def create_db_and_tables():
                     # Postgres specific timestamp with timezone
                     col_type = "TIMESTAMP WITH TIME ZONE" if engine.dialect.name == "postgresql" else "DATETIME"
                     conn.execute(text(f"ALTER TABLE events ADD COLUMN original_start_date {col_type}"))
+                
+                # Add daily_start_time for multi-day event daily window
+                if "daily_start_time" not in columns:
+                    logging.info("Migrating: Adding daily_start_time column")
+                    conn.execute(text("ALTER TABLE events ADD COLUMN daily_start_time VARCHAR(5)"))
+                
+                # Add daily_end_time for multi-day event daily window
+                if "daily_end_time" not in columns:
+                    logging.info("Migrating: Adding daily_end_time column")
+                    conn.execute(text("ALTER TABLE events ADD COLUMN daily_end_time VARCHAR(5)"))
                     
                 conn.commit()
     except Exception as e:
