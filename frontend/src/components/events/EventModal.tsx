@@ -3,7 +3,7 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { format } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 import {
     Dialog,
@@ -96,8 +96,8 @@ export function EventModal({
 
     const getDefaultValues = (): EventFormData => {
         if (event) {
-            const startDate = new Date(event.startDate);
-            const endDate = new Date(event.endDate);
+            const startDate = parseISO(event.startDate);
+            const endDate = parseISO(event.endDate);
             return {
                 title: event.title,
                 description: event.description || '',
