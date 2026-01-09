@@ -81,18 +81,30 @@ function WheelPicker({
     const handleWheel = useCallback((e: WheelEvent) => {
         e.preventDefault();
         const direction = e.deltaY > 0 ? 1 : -1;
-        const newIndex = Math.max(0, Math.min(values.length - 1, currentIndex + direction));
-        const newValue = values[newIndex];
 
-        // Check minimum and occupied
-        if (newValue >= minValue && !occupiedValues.includes(newValue)) {
-            const now = Date.now();
-            if (now - lastSoundTime.current > 50) {
-                playTickSound();
-                triggerHaptic();
-                lastSoundTime.current = now;
+        // Find the next valid value in the scroll direction (skip over disabled values)
+        let newIndex = currentIndex;
+        let attempts = 0;
+        const maxAttempts = values.length;
+
+        while (attempts < maxAttempts) {
+            newIndex = newIndex + direction;
+            // Clamp to valid range
+            if (newIndex < 0 || newIndex >= values.length) break;
+
+            const newValue = values[newIndex];
+            // Check if this value is valid (>= minValue and not occupied)
+            if (newValue >= minValue && !occupiedValues.includes(newValue)) {
+                const now = Date.now();
+                if (now - lastSoundTime.current > 50) {
+                    playTickSound();
+                    triggerHaptic();
+                    lastSoundTime.current = now;
+                }
+                onChange(newValue);
+                break;
             }
-            onChange(newValue);
+            attempts++;
         }
     }, [currentIndex, values, onChange, minValue, occupiedValues]);
 
@@ -119,9 +131,24 @@ function WheelPicker({
 
         // Calculate how many items we've scrolled
         const itemsScrolled = Math.round(-delta / itemHeight);
-        const newIndex = Math.max(0, Math.min(values.length - 1, currentIndex + itemsScrolled));
-        const newValue = values[newIndex];
+        const direction = itemsScrolled > 0 ? 1 : -1;
 
+        // Find the next valid value in the drag direction (skip over disabled values)
+        let targetIndex = currentIndex;
+        for (let i = 0; i < Math.abs(itemsScrolled); i++) {
+            let nextIndex = targetIndex + direction;
+            // Keep searching in the direction until we find a valid value or hit bounds
+            while (nextIndex >= 0 && nextIndex < values.length) {
+                const nextValue = values[nextIndex];
+                if (nextValue >= minValue && !occupiedValues.includes(nextValue)) {
+                    targetIndex = nextIndex;
+                    break;
+                }
+                nextIndex += direction;
+            }
+        }
+
+        const newValue = values[targetIndex];
         if (newValue !== selectedValue && newValue >= minValue && !occupiedValues.includes(newValue)) {
             playTickSound();
             triggerHaptic();
