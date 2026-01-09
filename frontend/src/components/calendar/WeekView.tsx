@@ -10,9 +10,9 @@ interface WeekViewProps {
     currentDate: Date;
     events: Event[];
     onDateClick: (date: Date) => void;
+    onTimeClick: (date: Date, hour: number) => void;
     onEventClick: (event: Event) => void;
 }
-
 
 const HOURS = [...Array.from({ length: 18 }, (_, i) => i + 6), ...Array.from({ length: 6 }, (_, i) => i)];
 const HOUR_HEIGHT = 60; // pixels per hour
@@ -22,7 +22,7 @@ const getDisplayHour = (hour: number) => {
     return hour >= 6 ? hour - 6 : hour + 18;
 };
 
-export function WeekView({ currentDate, events, onDateClick, onEventClick }: WeekViewProps) {
+export function WeekView({ currentDate, events, onDateClick, onTimeClick, onEventClick }: WeekViewProps) {
     const days = useMemo(() => getWeekDays(currentDate), [currentDate]);
 
     const getEventsForDay = (date: Date): Event[] => {
@@ -184,6 +184,7 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
                                         )}
                                         <div
                                             className="h-[60px] border-b border-border/20 hover:bg-muted/20 transition-colors cursor-pointer"
+                                            onClick={() => onTimeClick(day, hour)}
                                         />
                                     </div>
                                 ))}

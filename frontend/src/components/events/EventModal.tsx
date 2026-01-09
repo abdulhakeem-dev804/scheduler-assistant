@@ -129,13 +129,23 @@ export function EventModal({
 
         // For new events: use defaultDate if provided (from calendar click)
         const clickedDate = defaultDate ? format(defaultDate, 'yyyy-MM-dd') : '';
+        const clickedTime = defaultDate ? format(defaultDate, 'HH:mm') : '';
+
+        // Calculate default end time (start + 1 hour)
+        let defaultEndTime = '';
+        if (clickedTime) {
+            const [h, m] = clickedTime.split(':').map(Number);
+            const endH = (h + 1) % 24;
+            defaultEndTime = `${endH.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+        }
+
         return {
             title: '',
             description: '',
             startDate: clickedDate,
-            startTime: '',
+            startTime: clickedTime,
             endDate: clickedDate,
-            endTime: '',
+            endTime: defaultEndTime,
             category: 'work',
             priority: 'medium',
             isRecurring: false,

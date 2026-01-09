@@ -45,6 +45,7 @@ export function CalendarContainer({
                     currentDate={currentDate}
                     events={events}
                     onDateClick={onDateClick}
+                    onTimeClick={handleTimeClick}
                     onEventClick={onEventClick}
                 />
             );
