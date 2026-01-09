@@ -11,7 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Event, Resolution } from '@/types';
-import { CheckCircle2, XCircle, CalendarPlus, Clock } from 'lucide-react';
+import { CheckCircle2, XCircle, CalendarPlus, Clock, Trash2 } from 'lucide-react';
 import { SmartDatePicker } from './SmartDatePicker';
 import { SmartTimePicker } from './SmartTimePicker';
 import { CountdownTimer } from './CountdownTimer';
@@ -21,9 +21,10 @@ interface ResolutionModalProps {
     onClose: () => void;
     event: Event | null;
     onResolve: (eventId: string, resolution: Resolution, newEndDate?: string) => void;
+    onDelete?: (id: string) => void;
 }
 
-export function ResolutionModal({ isOpen, onClose, event, onResolve }: ResolutionModalProps) {
+export function ResolutionModal({ isOpen, onClose, event, onResolve, onDelete }: ResolutionModalProps) {
     const [showReschedule, setShowReschedule] = useState(false);
     const [customDate, setCustomDate] = useState<string>('');
     const [customTime, setCustomTime] = useState<string>('');
@@ -38,6 +39,13 @@ export function ResolutionModal({ isOpen, onClose, event, onResolve }: Resolutio
     const handleMissed = () => {
         onResolve(event.id, 'missed');
         onClose();
+    };
+
+    const handleDelete = () => {
+        if (onDelete) {
+            onDelete(event.id);
+            onClose();
+        }
     };
 
     const handleReschedule = (days: number) => {
@@ -124,6 +132,20 @@ export function ResolutionModal({ isOpen, onClose, event, onResolve }: Resolutio
                                     <div className="text-xs text-muted-foreground">Mark as incomplete</div>
                                 </div>
                             </Button>
+
+                            {onDelete && (
+                                <Button
+                                    variant="ghost"
+                                    className="w-full justify-start gap-3 h-12 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+                                    onClick={handleDelete}
+                                >
+                                    <Trash2 className="h-5 w-5" />
+                                    <div className="text-left">
+                                        <div className="font-medium">Delete this task</div>
+                                        <div className="text-xs opacity-70">Remove permanently</div>
+                                    </div>
+                                </Button>
+                            )}
                         </div>
                     ) : (
                         /* Reschedule Options */

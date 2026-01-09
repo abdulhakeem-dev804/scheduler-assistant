@@ -227,6 +227,7 @@ export default function Home() {
         onClose={() => setIsResolutionOpen(false)}
         event={selectedEvent}
         onResolve={handleResolve}
+        onDelete={handleDeleteEvent}
       />
 
       <Toaster richColors position="bottom-right" />
