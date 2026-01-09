@@ -59,11 +59,11 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
 
                 {/* Main Timer Display */}
                 <div className="flex justify-center py-12">
-                    <div className="scale-150 transform transition-transform origin-center">
+                    <div className="scale-125 transform transition-transform origin-center">
                         <EventCountdown
                             startDate={focusTask.startDate}
                             endDate={focusTask.endDate}
-                            variant="badge"
+                            variant="full"
                             dailyStartTime={focusTask.dailyStartTime}
                             dailyEndTime={focusTask.dailyEndTime}
                         />
