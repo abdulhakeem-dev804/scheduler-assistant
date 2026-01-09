@@ -96,15 +96,29 @@ export function EventModal({
 
     const getDefaultValues = (): EventFormData => {
         if (event) {
-            const startDate = parseISO(event.startDate);
-            const endDate = parseISO(event.endDate);
+            // Extract date and time directly from ISO string to avoid timezone conversion
+            // This preserves the exact time values as stored, regardless of browser timezone
+            const extractDateTime = (isoString: string) => {
+                // Handle both formats: "2026-01-21T10:00:00" and "2026-01-21T10:00:00.000Z"
+                const match = isoString.match(/^(\d{4}-\d{2}-\d{2})T(\d{2}:\d{2})/);
+                if (match) {
+                    return { date: match[1], time: match[2] };
+                }
+                // Fallback to Date parsing if format doesn't match
+                const d = parseISO(isoString);
+                return { date: format(d, 'yyyy-MM-dd'), time: format(d, 'HH:mm') };
+            };
+
+            const start = extractDateTime(event.startDate);
+            const end = extractDateTime(event.endDate);
+
             return {
                 title: event.title,
                 description: event.description || '',
-                startDate: format(startDate, 'yyyy-MM-dd'),
-                startTime: format(startDate, 'HH:mm'),
-                endDate: format(endDate, 'yyyy-MM-dd'),
-                endTime: format(endDate, 'HH:mm'),
+                startDate: start.date,
+                startTime: start.time,
+                endDate: end.date,
+                endTime: end.time,
                 category: event.category,
                 priority: event.priority,
                 isRecurring: event.isRecurring,
