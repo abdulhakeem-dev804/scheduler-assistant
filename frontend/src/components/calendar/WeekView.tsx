@@ -21,16 +21,61 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
 
     const getEventsForDay = (date: Date): Event[] => {
         return events.filter((event) => {
-            const eventDate = parseLocalDate(event.startDate);
-            return isSameDay(eventDate, date);
+            const eventStart = parseLocalDate(event.startDate);
+            const eventEnd = parseLocalDate(event.endDate);
+
+            // Normalize to day boundaries for comparison
+            const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+            const dayEnd = new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59);
+            const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+            const eventEndDay = new Date(eventEnd.getFullYear(), eventEnd.getMonth(), eventEnd.getDate());
+
+            // Event should appear on this day if: eventStart <= dayEnd AND eventEnd >= dayStart
+            return eventStartDay.getTime() <= dayEnd.getTime() && eventEndDay.getTime() >= dayStart.getTime();
         });
     };
 
-    const getEventPosition = (event: Event) => {
+    const getEventPosition = (event: Event, dayDate: Date) => {
         const startDate = parseLocalDate(event.startDate);
         const endDate = parseLocalDate(event.endDate);
-        const startHour = getHours(startDate) + getMinutes(startDate) / 60;
-        const endHour = getHours(endDate) + getMinutes(endDate) / 60;
+
+        // Check if this is a multi-day event
+        const eventStartDay = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+        const eventEndDay = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+        const currentDay = new Date(dayDate.getFullYear(), dayDate.getMonth(), dayDate.getDate());
+
+        const isMultiDay = eventStartDay.getTime() !== eventEndDay.getTime();
+        const isStartDay = eventStartDay.getTime() === currentDay.getTime();
+        const isEndDay = eventEndDay.getTime() === currentDay.getTime();
+        const isMiddleDay = currentDay.getTime() > eventStartDay.getTime() && currentDay.getTime() < eventEndDay.getTime();
+
+        let startHour: number;
+        let endHour: number;
+
+        if (isMultiDay) {
+            if (isStartDay) {
+                // On start day: show from start time to end of day (24:00)
+                startHour = getHours(startDate) + getMinutes(startDate) / 60;
+                endHour = 24;
+            } else if (isEndDay) {
+                // On end day: show from midnight to end time
+                startHour = 0;
+                endHour = getHours(endDate) + getMinutes(endDate) / 60;
+            } else if (isMiddleDay) {
+                // On middle days: show full day
+                startHour = 0;
+                endHour = 24;
+            } else {
+                // Fallback
+                startHour = getHours(startDate) + getMinutes(startDate) / 60;
+                endHour = getHours(endDate) + getMinutes(endDate) / 60;
+            }
+        } else {
+            // Same-day event
+            startHour = getHours(startDate) + getMinutes(startDate) / 60;
+            endHour = getHours(endDate) + getMinutes(endDate) / 60;
+        }
+
         const duration = Math.max(endHour - startHour, 0.5); // Minimum 30 min display
 
         return {
@@ -102,7 +147,7 @@ export function WeekView({ currentDate, events, onDateClick, onEventClick }: Wee
 
                                 {/* Events */}
                                 {dayEvents.map((event) => {
-                                    const { top, height } = getEventPosition(event);
+                                    const { top, height } = getEventPosition(event, day);
                                     const colors = categoryColors[event.category] || categoryColors.work;
                                     return (
                                         <div
