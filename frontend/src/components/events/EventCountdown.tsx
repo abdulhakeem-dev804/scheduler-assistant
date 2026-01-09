@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { cn } from '@/lib/utils';
+import { cn, parseLocalDate } from '@/lib/utils';
 import { Play, Clock, CheckCircle, AlertTriangle, Pause } from 'lucide-react';
 
 interface EventCountdownProps {
@@ -64,8 +64,8 @@ function getTodaySessionWindow(dailyStartTime: string, dailyEndTime: string): { 
 
 // Calculate total session time across all days
 function calculateTotalSessionMs(startDate: string, endDate: string, dailyStartTime: string, dailyEndTime: string): number {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = parseLocalDate(startDate);
+    const end = parseLocalDate(endDate);
 
     // Daily session duration in ms
     const startMinutes = parseTimeToMinutes(dailyStartTime);
@@ -83,7 +83,7 @@ function calculateTotalSessionMs(startDate: string, endDate: string, dailyStartT
 // Calculate elapsed session time (only counting time during daily windows)
 function calculateSessionElapsedMs(startDate: string, dailyStartTime: string, dailyEndTime: string): number {
     const now = new Date();
-    const eventStart = new Date(startDate);
+    const eventStart = parseLocalDate(startDate);
 
     const startMinutes = parseTimeToMinutes(dailyStartTime);
     const endMinutes = parseTimeToMinutes(dailyEndTime);
@@ -118,8 +118,8 @@ function calculateTimeState(
     dailyEndTime?: string
 ): TimeState {
     const now = new Date().getTime();
-    const start = new Date(startDate).getTime();
-    const end = new Date(endDate).getTime();
+    const start = parseLocalDate(startDate).getTime();
+    const end = parseLocalDate(endDate).getTime();
 
     if (isCompleted) {
         return {
