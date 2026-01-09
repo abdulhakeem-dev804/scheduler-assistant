@@ -353,6 +353,8 @@ export function EventModal({
                             endDate={`${form.watch('endDate')}T${form.watch('endTime')}:00`}
                             isCompleted={event?.isCompleted}
                             variant="full"
+                            dailyStartTime={form.watch('useDailyTime') ? form.watch('startTime') : undefined}
+                            dailyEndTime={form.watch('useDailyTime') ? form.watch('endTime') : undefined}
                         />
                     )}
 

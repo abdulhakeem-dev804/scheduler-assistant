@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
-import { Play, Clock, CheckCircle, AlertTriangle } from 'lucide-react';
+import { Play, Clock, CheckCircle, AlertTriangle, Pause } from 'lucide-react';
 
 interface EventCountdownProps {
     startDate: string;
@@ -10,10 +10,12 @@ interface EventCountdownProps {
     isCompleted?: boolean;
     className?: string;
     variant?: 'badge' | 'full' | 'compact';
+    dailyStartTime?: string;  // "HH:mm" format
+    dailyEndTime?: string;    // "HH:mm" format
 }
 
 interface TimeState {
-    status: 'upcoming' | 'ongoing' | 'ended' | 'completed';
+    status: 'upcoming' | 'ongoing' | 'ended' | 'completed' | 'paused';
     days: number;
     hours: number;
     minutes: number;
@@ -26,9 +28,95 @@ interface TimeState {
         minutes: number;
         seconds: number;
     };
+    // Daily session specific
+    todayRemaining?: {
+        hours: number;
+        minutes: number;
+        seconds: number;
+    };
+    sessionElapsed?: {
+        hours: number;
+        minutes: number;
+        seconds: number;
+    };
+    isInSession?: boolean;
 }
 
-function calculateTimeState(startDate: string, endDate: string, isCompleted?: boolean): TimeState {
+// Helper to parse time string "HH:mm" to minutes since midnight
+function parseTimeToMinutes(timeStr: string): number {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+}
+
+// Helper to get today's session window dates
+function getTodaySessionWindow(dailyStartTime: string, dailyEndTime: string): { start: Date; end: Date } {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const [startH, startM] = dailyStartTime.split(':').map(Number);
+    const [endH, endM] = dailyEndTime.split(':').map(Number);
+
+    const sessionStart = new Date(today.getTime() + startH * 60 * 60 * 1000 + startM * 60 * 1000);
+    const sessionEnd = new Date(today.getTime() + endH * 60 * 60 * 1000 + endM * 60 * 1000);
+
+    return { start: sessionStart, end: sessionEnd };
+}
+
+// Calculate total session time across all days
+function calculateTotalSessionMs(startDate: string, endDate: string, dailyStartTime: string, dailyEndTime: string): number {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+
+    // Daily session duration in ms
+    const startMinutes = parseTimeToMinutes(dailyStartTime);
+    const endMinutes = parseTimeToMinutes(dailyEndTime);
+    const dailyDurationMs = (endMinutes - startMinutes) * 60 * 1000;
+
+    // Count total days from start to end (inclusive)
+    const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+    const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+    const totalDays = Math.floor((endDay.getTime() - startDay.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+
+    return totalDays * dailyDurationMs;
+}
+
+// Calculate elapsed session time (only counting time during daily windows)
+function calculateSessionElapsedMs(startDate: string, dailyStartTime: string, dailyEndTime: string): number {
+    const now = new Date();
+    const eventStart = new Date(startDate);
+
+    const startMinutes = parseTimeToMinutes(dailyStartTime);
+    const endMinutes = parseTimeToMinutes(dailyEndTime);
+    const dailyDurationMs = (endMinutes - startMinutes) * 60 * 1000;
+
+    // Count completed days
+    const eventStartDay = new Date(eventStart.getFullYear(), eventStart.getMonth(), eventStart.getDate());
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const completedDays = Math.floor((today.getTime() - eventStartDay.getTime()) / (1000 * 60 * 60 * 24));
+
+    let totalElapsed = completedDays * dailyDurationMs;
+
+    // Add today's session time if currently in session
+    const { start: todayStart, end: todayEnd } = getTodaySessionWindow(dailyStartTime, dailyEndTime);
+
+    if (now >= todayStart && now < todayEnd) {
+        // Currently in session - add elapsed time today
+        totalElapsed += now.getTime() - todayStart.getTime();
+    } else if (now >= todayEnd) {
+        // Today's session already ended - add full session
+        totalElapsed += dailyDurationMs;
+    }
+
+    return Math.max(0, totalElapsed);
+}
+
+function calculateTimeState(
+    startDate: string,
+    endDate: string,
+    isCompleted?: boolean,
+    dailyStartTime?: string,
+    dailyEndTime?: string
+): TimeState {
     const now = new Date().getTime();
     const start = new Date(startDate).getTime();
     const end = new Date(endDate).getTime();
@@ -41,8 +129,103 @@ function calculateTimeState(startDate: string, endDate: string, isCompleted?: bo
         };
     }
 
+    // Daily session mode
+    if (dailyStartTime && dailyEndTime) {
+        const { start: todayStart, end: todayEnd } = getTodaySessionWindow(dailyStartTime, dailyEndTime);
+        const todayStartMs = todayStart.getTime();
+        const todayEndMs = todayEnd.getTime();
+
+        const isEventStarted = now >= start;
+        const isEventEnded = now > end;
+        const isInSession = now >= todayStartMs && now < todayEndMs && isEventStarted && !isEventEnded;
+
+        // Session-aware calculations
+        const totalSessionMs = calculateTotalSessionMs(startDate, endDate, dailyStartTime, dailyEndTime);
+        const sessionElapsedMs = isEventStarted ? calculateSessionElapsedMs(startDate, dailyStartTime, dailyEndTime) : 0;
+        const sessionRemainingMs = Math.max(0, totalSessionMs - sessionElapsedMs);
+
+        // Today's remaining time (only if in session)
+        let todayRemainingMs = 0;
+        if (isInSession) {
+            todayRemainingMs = todayEndMs - now;
+        }
+
+        if (!isEventStarted) {
+            // Upcoming
+            const diff = start - now;
+            return {
+                status: 'upcoming',
+                days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+                seconds: Math.floor((diff % (1000 * 60)) / 1000),
+                totalMs: diff,
+                label: 'Starts in',
+                isInSession: false,
+            };
+        } else if (isEventEnded) {
+            // Ended
+            const diff = now - end;
+            return {
+                status: 'ended',
+                days: Math.floor(diff / (1000 * 60 * 60 * 24)),
+                hours: Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                minutes: Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60)),
+                seconds: Math.floor((diff % (1000 * 60)) / 1000),
+                totalMs: diff,
+                label: 'Ended',
+                isInSession: false,
+            };
+        } else if (isInSession) {
+            // Currently in active session
+            return {
+                status: 'ongoing',
+                // Elapsed session time
+                days: 0,
+                hours: Math.floor(sessionElapsedMs / (1000 * 60 * 60)),
+                minutes: Math.floor((sessionElapsedMs % (1000 * 60 * 60)) / (1000 * 60)),
+                seconds: Math.floor((sessionElapsedMs % (1000 * 60)) / 1000),
+                totalMs: sessionElapsedMs,
+                label: 'In session',
+                isInSession: true,
+                // Remaining total session time
+                remaining: {
+                    days: Math.floor(sessionRemainingMs / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((sessionRemainingMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                    minutes: Math.floor((sessionRemainingMs % (1000 * 60 * 60)) / (1000 * 60)),
+                    seconds: Math.floor((sessionRemainingMs % (1000 * 60)) / 1000),
+                },
+                // Today's remaining
+                todayRemaining: {
+                    hours: Math.floor(todayRemainingMs / (1000 * 60 * 60)),
+                    minutes: Math.floor((todayRemainingMs % (1000 * 60 * 60)) / (1000 * 60)),
+                    seconds: Math.floor((todayRemainingMs % (1000 * 60)) / 1000),
+                },
+            };
+        } else {
+            // Between sessions (paused)
+            return {
+                status: 'paused',
+                // Session elapsed so far
+                days: 0,
+                hours: Math.floor(sessionElapsedMs / (1000 * 60 * 60)),
+                minutes: Math.floor((sessionElapsedMs % (1000 * 60 * 60)) / (1000 * 60)),
+                seconds: Math.floor((sessionElapsedMs % (1000 * 60)) / 1000),
+                totalMs: sessionElapsedMs,
+                label: 'Session paused',
+                isInSession: false,
+                remaining: {
+                    days: Math.floor(sessionRemainingMs / (1000 * 60 * 60 * 24)),
+                    hours: Math.floor((sessionRemainingMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+                    minutes: Math.floor((sessionRemainingMs % (1000 * 60 * 60)) / (1000 * 60)),
+                    seconds: Math.floor((sessionRemainingMs % (1000 * 60)) / 1000),
+                },
+            };
+        }
+    }
+
+    // Standard mode (no daily sessions)
     if (now < start) {
-        // Upcoming - show time until start
         const diff = start - now;
         return {
             status: 'upcoming',
@@ -54,20 +237,17 @@ function calculateTimeState(startDate: string, endDate: string, isCompleted?: bo
             label: 'Starts in'
         };
     } else if (now >= start && now < end) {
-        // Ongoing - show time elapsed AND remaining
         const elapsed = now - start;
         const remaining = end - now;
 
         return {
             status: 'ongoing',
-            // Elapsed time (Primary - Right side)
             days: Math.floor(elapsed / (1000 * 60 * 60 * 24)),
             hours: Math.floor((elapsed % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
             minutes: Math.floor((elapsed % (1000 * 60 * 60)) / (1000 * 60)),
             seconds: Math.floor((elapsed % (1000 * 60)) / 1000),
             totalMs: elapsed,
             label: 'In progress',
-            // Remaining time (Secondary - Middle)
             remaining: {
                 days: Math.floor(remaining / (1000 * 60 * 60 * 24)),
                 hours: Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
@@ -76,7 +256,6 @@ function calculateTimeState(startDate: string, endDate: string, isCompleted?: bo
             }
         };
     } else {
-        // Ended - show time since end
         const diff = now - end;
         return {
             status: 'ended',
@@ -107,10 +286,12 @@ export function EventCountdown({
     endDate,
     isCompleted,
     className,
-    variant = 'badge'
+    variant = 'badge',
+    dailyStartTime,
+    dailyEndTime,
 }: EventCountdownProps) {
     const [timeState, setTimeState] = useState<TimeState>(() =>
-        calculateTimeState(startDate, endDate, isCompleted)
+        calculateTimeState(startDate, endDate, isCompleted, dailyStartTime, dailyEndTime)
     );
     const [isSecondChanging, setIsSecondChanging] = useState(false);
 
@@ -120,11 +301,11 @@ export function EventCountdown({
         const interval = setInterval(() => {
             setIsSecondChanging(true);
             setTimeout(() => setIsSecondChanging(false), 150);
-            setTimeState(calculateTimeState(startDate, endDate, isCompleted));
+            setTimeState(calculateTimeState(startDate, endDate, isCompleted, dailyStartTime, dailyEndTime));
         }, 1000);
 
         return () => clearInterval(interval);
-    }, [startDate, endDate, isCompleted]);
+    }, [startDate, endDate, isCompleted, dailyStartTime, dailyEndTime]);
 
     const statusConfig = {
         upcoming: {
@@ -140,6 +321,13 @@ export function EventCountdown({
             border: 'border-emerald-500/30',
             icon: Play,
             iconColor: 'text-emerald-400',
+        },
+        paused: {
+            bg: 'bg-yellow-500/15',
+            text: 'text-yellow-400',
+            border: 'border-yellow-500/30',
+            icon: Pause,
+            iconColor: 'text-yellow-400',
         },
         ended: {
             bg: 'bg-orange-500/15',
@@ -194,7 +382,6 @@ export function EventCountdown({
                             {timeState.seconds.toString().padStart(2, '0')}s
                         </span>
 
-                        {/* Remaining Time (for ongoing) */}
                         {timeState.status === 'ongoing' && timeState.remaining && (
                             <>
                                 <span className="mx-1.5 opacity-30">|</span>
@@ -212,6 +399,8 @@ export function EventCountdown({
     }
 
     // Full variant - for EventModal
+    const hasDailySession = !!(dailyStartTime && dailyEndTime);
+
     return (
         <div className={cn(
             "flex items-center justify-between p-3 rounded-lg border",
@@ -229,30 +418,59 @@ export function EventCountdown({
                     <span className={cn("text-xs font-medium opacity-70", config.text)}>
                         {timeState.label}
                     </span>
+                    {timeState.status === 'paused' && (
+                        <span className="text-[10px] text-muted-foreground">
+                            Next session starts tomorrow
+                        </span>
+                    )}
                 </div>
             </div>
 
-            {/* Middle: Time Remaining (Only for Ongoing) */}
-            {timeState.status === 'ongoing' && timeState.remaining && (
-                <div className="flex flex-col items-end px-4 border-r border-border/10">
-                    <span className="text-[10px] text-muted-foreground mb-0.5">Time Remaining</span>
-                    <div className="flex items-baseline gap-1 font-mono tabular-nums text-sm opacity-80">
+            {/* Middle: Time Remaining */}
+            {(timeState.status === 'ongoing' || timeState.status === 'paused') && timeState.remaining && (
+                <div className="flex flex-col items-center px-4 border-x border-border/20">
+                    {/* Today's remaining (only if in session) */}
+                    {timeState.isInSession && timeState.todayRemaining && (
+                        <div className="flex flex-col items-center mb-1 pb-1 border-b border-border/20">
+                            <span className="text-[9px] text-yellow-400 mb-0.5">Today Left</span>
+                            <div className="flex items-baseline gap-0.5 font-mono tabular-nums text-sm text-yellow-400">
+                                <span>{timeState.todayRemaining.hours.toString().padStart(2, '0')}:</span>
+                                <span>{timeState.todayRemaining.minutes.toString().padStart(2, '0')}:</span>
+                                <span className={cn(isSecondChanging && "scale-105")}>
+                                    {timeState.todayRemaining.seconds.toString().padStart(2, '0')}
+                                </span>
+                            </div>
+                        </div>
+                    )}
+                    <span className="text-[10px] text-muted-foreground mb-0.5">
+                        {hasDailySession ? 'Total Session Left' : 'Time Remaining'}
+                    </span>
+                    <div className={cn(
+                        "flex items-baseline gap-1 font-mono tabular-nums text-sm",
+                        timeState.status === 'paused' ? 'opacity-60' : 'opacity-80'
+                    )}>
                         {timeState.remaining.days > 0 && <span>{timeState.remaining.days}d</span>}
                         <span>{timeState.remaining.hours.toString().padStart(2, '0')}:</span>
                         <span>{timeState.remaining.minutes.toString().padStart(2, '0')}:</span>
-                        <span>{timeState.remaining.seconds.toString().padStart(2, '0')}</span>
+                        <span className={cn(timeState.isInSession && isSecondChanging && "scale-105")}>
+                            {timeState.remaining.seconds.toString().padStart(2, '0')}
+                        </span>
                     </div>
                 </div>
             )}
 
-            {/* Right: Primary Time (Elapsed / Starts In / Ended Ago) */}
-
+            {/* Right: Session Elapsed / Time Elapsed */}
             {timeState.status !== 'completed' ? (
                 <div className="flex flex-col items-end">
-                    {timeState.status === 'ongoing' && (
-                        <span className="text-[10px] text-muted-foreground mb-0.5">Time Elapsed</span>
+                    {(timeState.status === 'ongoing' || timeState.status === 'paused') && (
+                        <span className="text-[10px] text-muted-foreground mb-0.5">
+                            {hasDailySession ? 'Session Elapsed' : 'Time Elapsed'}
+                        </span>
                     )}
-                    <div className="flex items-baseline gap-1 font-mono tabular-nums">
+                    <div className={cn(
+                        "flex items-baseline gap-1 font-mono tabular-nums",
+                        timeState.status === 'paused' && 'opacity-60'
+                    )}>
                         {timeState.days > 0 && (
                             <div className="flex flex-col items-center">
                                 <span className={cn("text-xl font-bold", config.text)}>{timeState.days}</span>
@@ -278,7 +496,7 @@ export function EventCountdown({
                             <span className={cn(
                                 "text-xl font-bold transition-all duration-150",
                                 config.text,
-                                isSecondChanging && "scale-110"
+                                timeState.isInSession && isSecondChanging && "scale-110"
                             )}>
                                 {timeState.seconds.toString().padStart(2, '0')}
                             </span>
