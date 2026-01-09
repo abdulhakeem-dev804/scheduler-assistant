@@ -24,6 +24,8 @@ function transformEvent(apiEvent: ApiEvent): Event {
         originalStartDate: apiEvent.original_start_date,
         createdAt: apiEvent.created_at,
         updatedAt: apiEvent.updated_at,
+        dailyStartTime: apiEvent.daily_start_time,
+        dailyEndTime: apiEvent.daily_end_time,
     };
 }
 

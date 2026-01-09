@@ -3,6 +3,7 @@
  */
 
 // Dynamically determine the API URL based on how the frontend is accessed
+import { CreateEventInput } from '@/types';
 function getApiBaseUrl(): string {
     // Prioritize environment variable if set (works for both client and server)
     if (process.env.NEXT_PUBLIC_API_URL) {
@@ -89,15 +90,15 @@ class ApiClient {
         if (params?.completed !== undefined) searchParams.set('completed', String(params.completed));
 
         const query = searchParams.toString();
-        return this.request<Event[]>(`/api/events/${query ? `?${query}` : ''}`);
+        return this.request<ApiEvent[]>(`/api/events/${query ? `?${query}` : ''}`);
     }
 
     async getEvent(id: string) {
-        return this.request<Event>(`/api/events/${id}`);
+        return this.request<ApiEvent>(`/api/events/${id}`);
     }
 
     async createEvent(data: CreateEventInput) {
-        return this.request<Event>('/api/events/', {
+        return this.request<ApiEvent>('/api/events/', {
             method: 'POST',
             body: {
                 title: data.title,
@@ -109,6 +110,8 @@ class ApiClient {
                 is_recurring: data.isRecurring,
                 timing_mode: data.timingMode || 'specific',
                 subtasks: data.subtasks || [],
+                daily_start_time: data.dailyStartTime,
+                daily_end_time: data.dailyEndTime,
             },
         });
     }
@@ -126,8 +129,10 @@ class ApiClient {
         if (data.timingMode !== undefined) body.timing_mode = data.timingMode;
         if (data.subtasks !== undefined) body.subtasks = data.subtasks;
         if (data.resolution !== undefined) body.resolution = data.resolution;
+        if (data.dailyStartTime !== undefined) body.daily_start_time = data.dailyStartTime;
+        if (data.dailyEndTime !== undefined) body.daily_end_time = data.dailyEndTime;
 
-        return this.request<Event>(`/api/events/${id}`, {
+        return this.request<ApiEvent>(`/api/events/${id}`, {
             method: 'PUT',
             body,
         });
@@ -138,7 +143,7 @@ class ApiClient {
     }
 
     async toggleEventCompletion(id: string) {
-        return this.request<Event>(`/api/events/${id}/toggle-complete`, { method: 'PATCH' });
+        return this.request<ApiEvent>(`/api/events/${id}/toggle-complete`, { method: 'PATCH' });
     }
 
     // Health check
@@ -148,7 +153,8 @@ class ApiClient {
 }
 
 // Types matching backend schema
-interface Event {
+// Types matching backend schema
+interface ApiEvent {
     id: string;
     title: string;
     description?: string;
@@ -164,21 +170,13 @@ interface Event {
     resolution?: 'pending' | 'completed' | 'missed' | 'rescheduled';
     reschedule_count?: number;
     original_start_date?: string;
+    daily_start_time?: string;
+    daily_end_time?: string;
     created_at: string;
     updated_at: string;
 }
 
-interface CreateEventInput {
-    title: string;
-    description?: string;
-    startDate: string;
-    endDate: string;
-    category: string;
-    priority: string;
-    isRecurring?: boolean;
-    timingMode?: 'specific' | 'anytime' | 'deadline';
-    subtasks?: Array<{ id?: string; title: string; completed: boolean }>;
-}
-
 export const apiClient = new ApiClient(API_BASE_URL);
-export type { Event as ApiEvent, CreateEventInput as ApiCreateEventInput };
+export type { ApiEvent }; // Export only the backend event type
+// CreateEventInput is imported from types at the top of file if needed, or we just rely on the import
+
