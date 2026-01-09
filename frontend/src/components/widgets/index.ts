@@ -1,1 +1,0 @@
-export { UpcomingEvents } from './UpcomingEvents';
