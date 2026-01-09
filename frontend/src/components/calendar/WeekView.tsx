@@ -151,16 +151,19 @@ export function WeekView({ currentDate, events, onDateClick, onTimeClick, onEven
                             <div key={hour} className="relative">
                                 {/* Midnight Divider Label */}
                                 {hour === 0 && (
-                                    <div className="absolute -top-3 w-full text-center">
-                                        <span className="bg-background px-1 text-[10px] text-primary/70 font-bold tracking-wider uppercase">
+                                    <div className="absolute top-0 w-full text-center z-10">
+                                        <span className="bg-background px-2 py-0.5 text-[10px] text-primary font-bold tracking-wider uppercase border border-primary/30 rounded">
                                             Midnight
                                         </span>
                                     </div>
                                 )}
                                 <div className="h-[60px] text-xs text-muted-foreground pr-2 text-right relative">
-                                    <span className="absolute -top-2 right-2">
-                                        {format(new Date().setHours(hour, 0), 'h a')}
-                                    </span>
+                                    {/* Only show time label if NOT midnight (we show "Midnight" label instead) */}
+                                    {hour !== 0 && (
+                                        <span className="absolute -top-2 right-2">
+                                            {format(new Date().setHours(hour, 0), 'h a')}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         ))}

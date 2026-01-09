@@ -133,8 +133,8 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
                             <div key={hour} className="relative">
                                 {/* Midnight Divider Label */}
                                 {hour === 0 && (
-                                    <div className="absolute -top-3 w-full text-center">
-                                        <span className="bg-background px-1 text-[10px] text-primary/70 font-bold tracking-wider uppercase">
+                                    <div className="absolute top-0 w-full text-center z-10">
+                                        <span className="bg-background px-2 py-0.5 text-[10px] text-primary font-bold tracking-wider uppercase border border-primary/30 rounded">
                                             Midnight
                                         </span>
                                     </div>
@@ -142,7 +142,8 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
                                 <div
                                     className="h-[80px] text-xs text-muted-foreground pr-3 text-right flex items-start justify-end pt-0"
                                 >
-                                    {format(new Date().setHours(hour, 0), 'h a')}
+                                    {/* Only show time label if NOT midnight */}
+                                    {hour !== 0 && format(new Date().setHours(hour, 0), 'h a')}
                                 </div>
                             </div>
                         ))}
@@ -213,8 +214,8 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
                             );
                         })}
                     </div>
-                </div>
-            </ScrollArea>
-        </div>
+                </div >
+            </ScrollArea >
+        </div >
     );
 }
