@@ -53,8 +53,8 @@ class EventBase(BaseModel):
     is_recurring: bool = False
     subtasks: List[Subtask] = []
     timing_mode: TimingModeEnum = TimingModeEnum.specific
-    daily_start_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")  # "HH:mm" format
-    daily_end_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")    # "HH:mm" format
+    daily_start_time: Optional[str] = Field(None, pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")  # "HH:mm" format
+    daily_end_time: Optional[str] = Field(None, pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")    # "HH:mm" format
 
 
 class EventCreate(EventBase):
@@ -73,8 +73,8 @@ class EventUpdate(BaseModel):
     subtasks: Optional[List[Subtask]] = None
     timing_mode: Optional[TimingModeEnum] = None
     resolution: Optional[ResolutionEnum] = None
-    daily_start_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
-    daily_end_time: Optional[str] = Field(None, pattern=r"^\d{2}:\d{2}$")
+    daily_start_time: Optional[str] = Field(None, pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
+    daily_end_time: Optional[str] = Field(None, pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
 
 
 class EventResponse(EventBase):
