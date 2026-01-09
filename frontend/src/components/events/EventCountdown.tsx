@@ -364,25 +364,55 @@ export function EventCountdown({
     if (variant === 'badge') {
         return (
             <span className={cn(
-                "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium font-mono tabular-nums border",
+                "inline-flex items-center px-2 py-0.5 rounded text-[11px] font-medium border transition-colors",
                 config.bg, config.text, config.border,
                 className
             )}>
-                <Icon className={cn("h-3 w-3", config.iconColor)} />
-                <span className="opacity-70">{timeState.label}</span>
-                {timeState.status !== 'completed' && (
-                    <>
-                        {timeState.days > 0 && <span>{timeState.days}d</span>}
-                        {(timeState.hours > 0 || timeState.days > 0) && <span>{timeState.hours}h</span>}
-                        <span>{timeState.minutes}m</span>
-                        <span className={cn(
-                            "transition-all duration-150",
-                            isSecondChanging && "scale-110 brightness-125"
-                        )}>
-                            {timeState.seconds.toString().padStart(2, '0')}s
-                        </span>
+                <Icon className="w-3 h-3 mr-1.5 shrink-0" />
 
-                        {timeState.status === 'ongoing' && timeState.remaining && (
+                {/* Special display for active daily session */}
+                {timeState.isInSession && timeState.todayRemaining ? (
+                    <>
+                        <span className="opacity-70 mr-1.5">Today Left:</span>
+                        <span className="font-mono tabular-nums text-yellow-500 font-bold">
+                            {timeState.todayRemaining.hours.toString().padStart(2, '0')}:
+                            {timeState.todayRemaining.minutes.toString().padStart(2, '0')}:
+                            <span className={cn(
+                                isSecondChanging && "scale-110 brightness-125"
+                            )}>
+                                {timeState.todayRemaining.seconds.toString().padStart(2, '0')}
+                            </span>
+                        </span>
+                    </>
+                ) : (
+                    /* Standard display */
+                    <>
+                        {(timeState.status === 'upcoming' || timeState.status === 'ongoing' || timeState.status === 'paused') && (
+                            <>
+                                <span className="font-mono tabular-nums mr-1.5">
+                                    {timeState.days > 0 && <span>{timeState.days}d </span>}
+                                    {timeState.hours.toString().padStart(2, '0')}:
+                                    {timeState.minutes.toString().padStart(2, '0')}:
+                                    <span className={cn(
+                                        isSecondChanging && "scale-110 brightness-125"
+                                    )}>
+                                        {timeState.seconds.toString().padStart(2, '0')}s
+                                    </span>
+                                </span>
+                                <span className="opacity-70">{timeState.label}</span>
+                            </>
+                        )}
+
+                        {timeState.status === 'completed' && (
+                            <span>Completed</span>
+                        )}
+
+                        {timeState.status === 'ended' && (
+                            <span>Ended</span>
+                        )}
+
+                        {/* Show remaining if available (unless in session where we show Today Left above) */}
+                        {timeState.status === 'ongoing' && timeState.remaining && !timeState.isInSession && (
                             <>
                                 <span className="mx-1.5 opacity-30">|</span>
                                 <span className="opacity-70 mr-1">left</span>
