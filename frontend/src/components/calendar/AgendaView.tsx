@@ -131,6 +131,8 @@ export function AgendaView({ events, onEventClick, onToggleComplete }: AgendaVie
                                                     endDate={event.endDate}
                                                     isCompleted={event.isCompleted}
                                                     variant="badge"
+                                                    dailyStartTime={event.dailyStartTime}
+                                                    dailyEndTime={event.dailyEndTime}
                                                 />
                                                 <Badge variant="outline" className={cn(colors.bg, colors.text, "border-0")}>
                                                     {event.category}

@@ -172,6 +172,8 @@ export function DayView({ currentDate, events, onTimeClick, onEventClick }: DayV
                                             isCompleted={event.isCompleted}
                                             variant="compact"
                                             className="mt-1"
+                                            dailyStartTime={event.dailyStartTime}
+                                            dailyEndTime={event.dailyEndTime}
                                         />
                                     )}
                                     {event.description && height > 80 && (
