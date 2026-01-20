@@ -40,6 +40,13 @@ interface TimeState {
         seconds: number;
     };
     isInSession?: boolean;
+    // Next session countdown
+    nextSessionStartsIn?: {
+        hours: number;
+        minutes: number;
+        seconds: number;
+    };
+    nextSessionIsToday?: boolean;
 }
 
 // Helper to parse time string "HH:mm" to minutes since midnight
@@ -203,7 +210,26 @@ function calculateTimeState(
                 },
             };
         } else {
-            // Between sessions (paused)
+            // Between sessions (paused) - check if today's session hasn't started yet or has ended
+            const nowDate = new Date();
+            const { start: todaySessionStart, end: todaySessionEnd } = getTodaySessionWindow(dailyStartTime!, dailyEndTime!);
+
+            let nextSessionMs: number;
+            let nextSessionIsToday: boolean;
+
+            if (nowDate.getTime() < todaySessionStart.getTime()) {
+                // Today's session hasn't started yet - next session is later today
+                nextSessionMs = todaySessionStart.getTime() - nowDate.getTime();
+                nextSessionIsToday = true;
+            } else {
+                // Today's session has ended - next session is tomorrow
+                const tomorrow = new Date(nowDate.getFullYear(), nowDate.getMonth(), nowDate.getDate() + 1);
+                const [startH, startM] = dailyStartTime!.split(':').map(Number);
+                const tomorrowSessionStart = new Date(tomorrow.getTime() + startH * 60 * 60 * 1000 + startM * 60 * 1000);
+                nextSessionMs = tomorrowSessionStart.getTime() - nowDate.getTime();
+                nextSessionIsToday = false;
+            }
+
             return {
                 status: 'paused',
                 // Session elapsed so far
@@ -220,6 +246,12 @@ function calculateTimeState(
                     minutes: Math.floor((sessionRemainingMs % (1000 * 60 * 60)) / (1000 * 60)),
                     seconds: Math.floor((sessionRemainingMs % (1000 * 60)) / 1000),
                 },
+                nextSessionStartsIn: {
+                    hours: Math.floor(nextSessionMs / (1000 * 60 * 60)),
+                    minutes: Math.floor((nextSessionMs % (1000 * 60 * 60)) / (1000 * 60)),
+                    seconds: Math.floor((nextSessionMs % (1000 * 60)) / 1000),
+                },
+                nextSessionIsToday,
             };
         }
     }
@@ -448,9 +480,13 @@ export function EventCountdown({
                     <span className={cn("text-xs font-medium opacity-70", config.text)}>
                         {timeState.label}
                     </span>
-                    {timeState.status === 'paused' && (
+                    {timeState.status === 'paused' && timeState.nextSessionStartsIn && (
                         <span className="text-[10px] text-muted-foreground">
-                            Next session starts tomorrow
+                            Next session starts {timeState.nextSessionIsToday ? 'today' : 'tomorrow'} in{' '}
+                            <span className="font-mono tabular-nums text-primary">
+                                {timeState.nextSessionStartsIn.hours > 0 && `${timeState.nextSessionStartsIn.hours}h `}
+                                {timeState.nextSessionStartsIn.minutes}m {timeState.nextSessionStartsIn.seconds}s
+                            </span>
                         </span>
                     )}
                 </div>
