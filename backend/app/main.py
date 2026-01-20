@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import socketio
 
-from app.routers import events, pomodoro
+from app.routers import events, pomodoro, sessions
 from app.database import create_db_and_tables
 
 
@@ -53,6 +53,7 @@ app.add_middleware(
 # Include routers
 app.include_router(events.router, prefix="/api/events", tags=["Events"])
 app.include_router(pomodoro.router, prefix="/api/pomodoro", tags=["Pomodoro"])
+app.include_router(sessions.router, prefix="/api/events", tags=["Sessions"])
 
 
 @app.get("/")

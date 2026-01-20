@@ -117,3 +117,45 @@ class PomodoroStats(BaseModel):
     total_work_time: int  # in minutes
     completed_sessions: int
     average_session_length: float  # in minutes
+
+
+# Session Attendance Schemas
+class SessionStatusEnum(str, Enum):
+    pending = "pending"
+    attended = "attended"
+    missed = "missed"
+    skipped = "skipped"
+
+
+class SessionAttendanceCreate(BaseModel):
+    session_date: str  # YYYY-MM-DD format
+    status: SessionStatusEnum
+    notes: Optional[str] = None
+
+
+class SessionAttendanceUpdate(BaseModel):
+    status: SessionStatusEnum
+    notes: Optional[str] = None
+
+
+class SessionAttendanceResponse(BaseModel):
+    id: str
+    event_id: str
+    session_date: str
+    status: SessionStatusEnum
+    notes: Optional[str]
+    created_at: Optional[datetime] = None
+
+    class Config:
+        from_attributes = True
+
+
+class SessionStats(BaseModel):
+    total_sessions: int
+    attended: int
+    missed: int
+    skipped: int
+    pending: int
+    attendance_rate: float  # percentage 0-100
+    current_streak: int  # consecutive attended days
+

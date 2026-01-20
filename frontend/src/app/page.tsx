@@ -4,6 +4,7 @@ import { useState, useCallback } from 'react';
 import { Sidebar, Header } from '@/components/layout';
 import { CalendarContainer } from '@/components/calendar';
 import { EventModal, ResolutionModal } from '@/components/events';
+import { SessionEndedPopup } from '@/components/events/SessionEndedPopup';
 import { StatisticsView } from '@/components/dashboard/StatisticsView';
 import { FocusView } from '@/components/focus/FocusView';
 import {
@@ -15,6 +16,7 @@ import {
   useCalendar,
   useSocketSync
 } from '@/hooks';
+import { useSessionNotifications } from '@/hooks/useSessionNotifications';
 import { Event, CreateEventInput, CalendarView, Resolution } from '@/types';
 import { Toaster, toast } from 'sonner';
 
@@ -41,6 +43,9 @@ export default function Home() {
   const [isResolutionOpen, setIsResolutionOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | undefined>();
+
+  // Session notification popup for daily-session events
+  const { pendingPopups, dismissPopup, markSession } = useSessionNotifications(events);
 
   const handleViewChange = useCallback((newView: string) => {
     setView(newView as CalendarView);
@@ -228,6 +233,28 @@ export default function Home() {
       />
 
       <Toaster richColors position="bottom-right" />
+
+      {/* Session Ended Popup */}
+      {pendingPopups.length > 0 && (
+        <SessionEndedPopup
+          event={pendingPopups[0].event}
+          sessionDate={pendingPopups[0].sessionDate}
+          onMarkAttended={async () => {
+            await markSession(pendingPopups[0].event.id, pendingPopups[0].sessionDate, 'attended');
+            toast.success('Session marked as attended! 🎉');
+          }}
+          onMarkMissed={async () => {
+            await markSession(pendingPopups[0].event.id, pendingPopups[0].sessionDate, 'missed');
+            toast.info('Session marked as missed');
+          }}
+          onSkip={() => {
+            dismissPopup(pendingPopups[0].event.id, pendingPopups[0].sessionDate);
+          }}
+          onDismiss={() => {
+            dismissPopup(pendingPopups[0].event.id, pendingPopups[0].sessionDate);
+          }}
+        />
+      )}
     </div>
   );
 }

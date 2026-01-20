@@ -72,3 +72,23 @@ class PomodoroSession(Base):
     duration = Column(String, nullable=False)  # in seconds
     completed = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+
+
+class SessionStatusEnum(str, enum.Enum):
+    pending = "pending"      # Session hasn't happened yet / not marked
+    attended = "attended"    # User completed the session
+    missed = "missed"        # User confirmed they missed it
+    skipped = "skipped"      # User intentionally skipped
+
+
+class SessionAttendance(Base):
+    """Track per-day session attendance for multi-day events with daily sessions"""
+    __tablename__ = "session_attendance"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    event_id = Column(String, nullable=False)  # References events.id
+    session_date = Column(String, nullable=False)  # YYYY-MM-DD format
+    status = Column(Enum(SessionStatusEnum), default=SessionStatusEnum.pending)
+    notes = Column(String(500), nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=text("CURRENT_TIMESTAMP"))
+

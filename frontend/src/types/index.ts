@@ -6,6 +6,28 @@ export interface Subtask {
     completed: boolean;
 }
 
+// Session Attendance Types
+export type SessionStatus = 'pending' | 'attended' | 'missed' | 'skipped';
+
+export interface SessionAttendance {
+    id: string;
+    eventId: string;
+    sessionDate: string;  // YYYY-MM-DD format
+    status: SessionStatus;
+    notes?: string;
+    createdAt?: string;
+}
+
+export interface SessionStats {
+    totalSessions: number;
+    attended: number;
+    missed: number;
+    skipped: number;
+    pending: number;
+    attendanceRate: number;  // percentage 0-100
+    currentStreak: number;   // consecutive attended days
+}
+
 export type Resolution = 'pending' | 'completed' | 'missed' | 'rescheduled';
 
 export type TimingMode = 'specific' | 'anytime' | 'deadline';

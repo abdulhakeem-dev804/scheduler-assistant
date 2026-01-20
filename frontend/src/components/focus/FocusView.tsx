@@ -1,12 +1,14 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Event } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EventCountdown } from '@/components/events/EventCountdown';
-import { CheckCircle2, Circle, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
+import { SessionHistory } from '@/components/events/SessionHistory';
+import { CheckCircle2, Circle, ChevronLeft, ChevronRight, Clock, CalendarCheck } from 'lucide-react';
 import { cn, parseLocalDate } from '@/lib/utils';
 import { format } from 'date-fns';
+import { apiClient } from '@/lib/api';
 
 interface FocusViewProps {
     events: Event[];
@@ -309,15 +311,30 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
                         )}
 
                         {/* Actions */}
-                        <div className="pt-4 flex justify-end">
-                            <Button
-                                size="lg"
-                                className="w-full sm:w-auto gap-2 text-lg h-14"
-                                onClick={() => onToggleComplete(focusTask)}
-                            >
-                                <CheckCircle2 className="w-6 h-6" />
-                                Complete Task
-                            </Button>
+                        <div className="pt-4 space-y-4">
+                            {/* Session History for daily-session events */}
+                            {focusTask.dailyStartTime && focusTask.dailyEndTime && (
+                                <SessionHistory event={focusTask} compact />
+                            )}
+
+                            {/* Action Buttons */}
+                            <div className="flex justify-end gap-2">
+                                {focusTask.dailyStartTime && focusTask.dailyEndTime ? (
+                                    <SessionActionButton
+                                        event={focusTask}
+                                        onComplete={() => onToggleComplete(focusTask)}
+                                    />
+                                ) : (
+                                    <Button
+                                        size="lg"
+                                        className="w-full sm:w-auto gap-2 text-lg h-14"
+                                        onClick={() => onToggleComplete(focusTask)}
+                                    >
+                                        <CheckCircle2 className="w-6 h-6" />
+                                        Complete Task
+                                    </Button>
+                                )}
+                            </div>
                         </div>
                     </CardContent>
                 </Card>
@@ -376,3 +393,78 @@ function LayoutList({ className }: { className?: string }) {
         </svg>
     )
 }
+
+// Session action button for daily-session events
+function SessionActionButton({ event, onComplete }: { event: Event; onComplete: () => void }) {
+    const [isMarking, setIsMarking] = useState(false);
+    const [todayMarked, setTodayMarked] = useState(false);
+
+    const today = format(new Date(), 'yyyy-MM-dd');
+
+    const handleMarkToday = async () => {
+        try {
+            setIsMarking(true);
+            await apiClient.markSessionAttendance(event.id, today, 'attended');
+            setTodayMarked(true);
+        } catch (error) {
+            console.error('Error marking session:', error);
+        } finally {
+            setIsMarking(false);
+        }
+    };
+
+    // Check if we're in today's session window
+    const isInSessionWindow = () => {
+        if (!event.dailyStartTime || !event.dailyEndTime) return false;
+
+        const now = new Date();
+        const [startH, startM] = event.dailyStartTime.split(':').map(Number);
+        const [endH, endM] = event.dailyEndTime.split(':').map(Number);
+
+        const sessionStart = new Date(now.getFullYear(), now.getMonth(), now.getDate(), startH, startM);
+        const sessionEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), endH, endM);
+
+        return now >= sessionStart && now < sessionEnd;
+    };
+
+    const inSession = isInSessionWindow();
+
+    if (todayMarked) {
+        return (
+            <Button
+                size="lg"
+                className="w-full sm:w-auto gap-2 text-lg h-14 bg-emerald-600 hover:bg-emerald-700"
+                disabled
+            >
+                <CheckCircle2 className="w-6 h-6" />
+                Today's Session Marked ✓
+            </Button>
+        );
+    }
+
+    return (
+        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            {inSession && (
+                <Button
+                    size="lg"
+                    className="w-full sm:w-auto gap-2 text-lg h-14 bg-emerald-600 hover:bg-emerald-700"
+                    onClick={handleMarkToday}
+                    disabled={isMarking}
+                >
+                    <CalendarCheck className="w-6 h-6" />
+                    {isMarking ? 'Marking...' : "Mark Today's Session ✓"}
+                </Button>
+            )}
+            <Button
+                size="lg"
+                variant={inSession ? "outline" : "default"}
+                className="w-full sm:w-auto gap-2 text-lg h-14"
+                onClick={onComplete}
+            >
+                <CheckCircle2 className="w-6 h-6" />
+                Complete All Sessions
+            </Button>
+        </div>
+    );
+}
+

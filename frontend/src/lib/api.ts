@@ -146,6 +146,40 @@ class ApiClient {
         return this.request<ApiEvent>(`/api/events/${id}/toggle-complete`, { method: 'PATCH' });
     }
 
+    // Session Attendance API
+    async getEventSessions(eventId: string) {
+        return this.request<ApiSessionAttendance[]>(`/api/events/${eventId}/sessions`);
+    }
+
+    async getSessionStats(eventId: string) {
+        return this.request<ApiSessionStats>(`/api/events/${eventId}/sessions/stats`);
+    }
+
+    async getPendingSessions(eventId: string) {
+        return this.request<string[]>(`/api/events/${eventId}/sessions/pending`);
+    }
+
+    async markSessionAttendance(eventId: string, sessionDate: string, status: 'attended' | 'missed' | 'skipped', notes?: string) {
+        return this.request<ApiSessionAttendance>(`/api/events/${eventId}/sessions`, {
+            method: 'POST',
+            body: {
+                session_date: sessionDate,
+                status,
+                notes,
+            },
+        });
+    }
+
+    async updateSessionAttendance(eventId: string, sessionDate: string, status: 'attended' | 'missed' | 'skipped', notes?: string) {
+        return this.request<ApiSessionAttendance>(`/api/events/${eventId}/sessions/${sessionDate}`, {
+            method: 'PATCH',
+            body: {
+                status,
+                notes,
+            },
+        });
+    }
+
     // Health check
     async healthCheck() {
         return this.request<{ status: string }>('/health');
@@ -176,7 +210,26 @@ interface ApiEvent {
     updated_at: string;
 }
 
+interface ApiSessionAttendance {
+    id: string;
+    event_id: string;
+    session_date: string;
+    status: 'pending' | 'attended' | 'missed' | 'skipped';
+    notes?: string;
+    created_at?: string;
+}
+
+interface ApiSessionStats {
+    total_sessions: number;
+    attended: number;
+    missed: number;
+    skipped: number;
+    pending: number;
+    attendance_rate: number;
+    current_streak: number;
+}
+
 export const apiClient = new ApiClient(API_BASE_URL);
-export type { ApiEvent }; // Export only the backend event type
-// CreateEventInput is imported from types at the top of file if needed, or we just rely on the import
+export type { ApiEvent, ApiSessionAttendance, ApiSessionStats };
+
 
