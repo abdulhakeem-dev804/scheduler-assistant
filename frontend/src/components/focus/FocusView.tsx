@@ -4,35 +4,144 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EventCountdown } from '@/components/events/EventCountdown';
-import { CheckCircle2, Circle, AlertCircle, Play, Pause } from 'lucide-react';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils'; // Assuming cn exists
+import { CheckCircle2, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { cn, parseLocalDate } from '@/lib/utils';
 
 interface FocusViewProps {
     events: Event[];
     onToggleComplete: (event: Event) => void;
 }
 
-export function FocusView({ events, onToggleComplete }: FocusViewProps) {
-    // 1. Filter active events
-    // 2. Sort by Priority (High > Medium > Low) -> Sub-sort by Start Time
-    const focusTask = useMemo(() => {
-        const activeEvents = events.filter(e => !e.isCompleted);
+// Helper to parse time string "HH:mm" to minutes since midnight
+function parseTimeToMinutes(timeStr: string): number {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+}
 
-        return activeEvents.sort((a, b) => {
-            // Priority sort
+// Helper to get today's session window dates
+function getTodaySessionWindow(dailyStartTime: string, dailyEndTime: string): { start: Date; end: Date } {
+    const now = new Date();
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+
+    const [startH, startM] = dailyStartTime.split(':').map(Number);
+    const [endH, endM] = dailyEndTime.split(':').map(Number);
+
+    const sessionStart = new Date(today.getTime() + startH * 60 * 60 * 1000 + startM * 60 * 1000);
+    const sessionEnd = new Date(today.getTime() + endH * 60 * 60 * 1000 + endM * 60 * 1000);
+
+    return { start: sessionStart, end: sessionEnd };
+}
+
+// Determine session status for filtering
+type SessionStatus = 'in-session' | 'upcoming' | 'paused' | 'ended';
+
+function getSessionStatus(event: Event, now: Date): SessionStatus {
+    const start = parseLocalDate(event.startDate);
+    const end = parseLocalDate(event.endDate);
+    const nowMs = now.getTime();
+    const startMs = start.getTime();
+    const endMs = end.getTime();
+
+    // Event hasn't started yet
+    if (nowMs < startMs) {
+        return 'upcoming';
+    }
+
+    // Event has completely ended (past end date)
+    if (nowMs > endMs) {
+        return 'ended';
+    }
+
+    // Event is within date range, check daily session times
+    if (event.dailyStartTime && event.dailyEndTime) {
+        const { start: sessionStart, end: sessionEnd } = getTodaySessionWindow(
+            event.dailyStartTime,
+            event.dailyEndTime
+        );
+        const sessionStartMs = sessionStart.getTime();
+        const sessionEndMs = sessionEnd.getTime();
+
+        if (nowMs >= sessionStartMs && nowMs < sessionEndMs) {
+            return 'in-session';
+        } else if (nowMs < sessionStartMs) {
+            // Session hasn't started today yet
+            return 'upcoming';
+        } else {
+            // Today's session ended, but event continues on future days
+            return 'paused';
+        }
+    }
+
+    // No daily session times - standard ongoing event
+    return 'in-session';
+}
+
+export function FocusView({ events, onToggleComplete }: FocusViewProps) {
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    // Filter and sort focus tasks
+    const focusTasks = useMemo(() => {
+        const now = new Date();
+
+        // Filter: active, not completed, session not completely ended
+        const validEvents = events.filter(e => {
+            if (e.isCompleted) return false;
+
+            const status = getSessionStatus(e, now);
+            // Exclude 'ended' events - their sessions are completely over
+            return status !== 'ended';
+        });
+
+        // Sort: in-session first → priority → start time
+        return validEvents.sort((a, b) => {
+            const statusA = getSessionStatus(a, now);
+            const statusB = getSessionStatus(b, now);
+
+            // In-session events first
+            const sessionOrder: Record<SessionStatus, number> = {
+                'in-session': 0,
+                'upcoming': 1,
+                'paused': 2,
+                'ended': 3
+            };
+
+            if (sessionOrder[statusA] !== sessionOrder[statusB]) {
+                return sessionOrder[statusA] - sessionOrder[statusB];
+            }
+
+            // Then by priority
             const priorityWeight = { high: 3, medium: 2, low: 1 };
             const weightA = priorityWeight[a.priority];
             const weightB = priorityWeight[b.priority];
 
             if (weightA !== weightB) return weightB - weightA; // Descending
 
-            // Time sort
+            // Then by start time
             return new Date(a.startDate).getTime() - new Date(b.startDate).getTime();
-        })[0]; // Take top
+        });
     }, [events]);
 
-    if (!focusTask) {
+    // Reset index if out of bounds
+    useEffect(() => {
+        if (currentIndex >= focusTasks.length && focusTasks.length > 0) {
+            setCurrentIndex(focusTasks.length - 1);
+        } else if (focusTasks.length === 0) {
+            setCurrentIndex(0);
+        }
+    }, [focusTasks.length, currentIndex]);
+
+    const focusTask = focusTasks[currentIndex];
+
+    const goToPrevious = () => {
+        setCurrentIndex(prev => Math.max(0, prev - 1));
+    };
+
+    const goToNext = () => {
+        setCurrentIndex(prev => Math.min(focusTasks.length - 1, prev + 1));
+    };
+
+    // Empty state
+    if (!focusTask || focusTasks.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground p-8">
                 <CheckCircle2 className="w-16 h-16 mb-4 text-green-500" />
@@ -42,16 +151,83 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
         );
     }
 
+    const currentSessionStatus = getSessionStatus(focusTask, new Date());
+
     return (
         <div className="flex flex-col h-full bg-background/50 backdrop-blur-sm p-6 lg:p-12 overflow-y-auto">
             {/* Main Focus Container - Centered */}
-            <div className="max-w-4xl mx-auto w-full space-y-8 flex-1 flex flex-col justify-center">
+            <div className="max-w-4xl mx-auto w-full space-y-6 flex-1 flex flex-col justify-center">
+
+                {/* Navigation Header */}
+                <div className="flex items-center justify-center gap-4">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={goToPrevious}
+                        disabled={currentIndex === 0}
+                        className="h-10 w-10 rounded-full hover:bg-primary/10"
+                    >
+                        <ChevronLeft className="h-6 w-6" />
+                    </Button>
+
+                    <div className="flex flex-col items-center gap-2">
+                        <span className="text-sm text-muted-foreground">
+                            Focus {currentIndex + 1} of {focusTasks.length}
+                        </span>
+
+                        {/* Dot indicators */}
+                        {focusTasks.length > 1 && focusTasks.length <= 10 && (
+                            <div className="flex gap-1.5">
+                                {focusTasks.map((_, idx) => (
+                                    <button
+                                        key={idx}
+                                        onClick={() => setCurrentIndex(idx)}
+                                        className={cn(
+                                            "w-2 h-2 rounded-full transition-all duration-200",
+                                            idx === currentIndex
+                                                ? "bg-primary w-6"
+                                                : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                                        )}
+                                        aria-label={`Go to focus ${idx + 1}`}
+                                    />
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={goToNext}
+                        disabled={currentIndex === focusTasks.length - 1}
+                        className="h-10 w-10 rounded-full hover:bg-primary/10"
+                    >
+                        <ChevronRight className="h-6 w-6" />
+                    </Button>
+                </div>
 
                 {/* Header: Label + Priority */}
                 <div className="text-center space-y-4">
-                    <Badge variant="outline" className="px-4 py-1 text-sm uppercase tracking-widest border-primary/50 text-primary">
-                        Current Focus
-                    </Badge>
+                    <div className="flex items-center justify-center gap-2">
+                        <Badge variant="outline" className="px-4 py-1 text-sm uppercase tracking-widest border-primary/50 text-primary">
+                            Current Focus
+                        </Badge>
+                        {currentSessionStatus === 'in-session' && (
+                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                                In Session
+                            </Badge>
+                        )}
+                        {currentSessionStatus === 'paused' && (
+                            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                Session Paused
+                            </Badge>
+                        )}
+                        {currentSessionStatus === 'upcoming' && (
+                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                Upcoming
+                            </Badge>
+                        )}
+                    </div>
                     <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground/90">
                         {focusTask.title}
                     </h1>
@@ -129,6 +305,35 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
                         </div>
                     </CardContent>
                 </Card>
+
+                {/* Quick Focus Selector (for more than 3 items) */}
+                {focusTasks.length > 3 && (
+                    <Card className="bg-card/30 border-border/30">
+                        <CardHeader className="py-3">
+                            <CardTitle className="text-sm font-medium text-muted-foreground">
+                                Quick Jump
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="py-3">
+                            <div className="flex flex-wrap gap-2">
+                                {focusTasks.map((task, idx) => (
+                                    <Button
+                                        key={task.id}
+                                        variant={idx === currentIndex ? "default" : "outline"}
+                                        size="sm"
+                                        onClick={() => setCurrentIndex(idx)}
+                                        className={cn(
+                                            "text-xs",
+                                            idx === currentIndex && "ring-2 ring-primary/50"
+                                        )}
+                                    >
+                                        {task.title.length > 20 ? task.title.slice(0, 20) + '...' : task.title}
+                                    </Button>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </div>
     );
