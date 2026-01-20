@@ -229,7 +229,7 @@ export function SessionHistory({ event, onSessionMarked, compact = false }: Sess
                             <div
                                 key={date}
                                 className={cn(
-                                    "flex items-center justify-between p-2 rounded-lg",
+                                    "flex items-center justify-between p-2 rounded-lg group",
                                     bg,
                                     isPending && "border border-dashed border-border"
                                 )}
@@ -239,31 +239,39 @@ export function SessionHistory({ event, onSessionMarked, compact = false }: Sess
                                     <span className="text-sm">{formatSessionDate(date)}</span>
                                 </div>
 
-                                {isPending && !isFuture(parseISO(date)) ? (
+                                {!isFuture(parseISO(date)) && (
                                     <div className="flex gap-1">
                                         <Button
                                             size="sm"
-                                            variant="ghost"
-                                            className="h-6 px-2 text-xs hover:bg-emerald-500/20 hover:text-emerald-500"
+                                            variant={status === 'attended' ? 'default' : 'ghost'}
+                                            className={cn(
+                                                "h-6 px-2 text-xs",
+                                                status === 'attended'
+                                                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                                                    : "hover:bg-emerald-500/20 hover:text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            )}
                                             onClick={() => markSession(date, 'attended')}
-                                            disabled={isMarkingThis}
+                                            disabled={isMarkingThis || status === 'attended'}
+                                            title="Mark as attended"
                                         >
                                             ✓
                                         </Button>
                                         <Button
                                             size="sm"
-                                            variant="ghost"
-                                            className="h-6 px-2 text-xs hover:bg-red-500/20 hover:text-red-500"
+                                            variant={status === 'missed' ? 'default' : 'ghost'}
+                                            className={cn(
+                                                "h-6 px-2 text-xs",
+                                                status === 'missed'
+                                                    ? "bg-red-600 hover:bg-red-700 text-white"
+                                                    : "hover:bg-red-500/20 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            )}
                                             onClick={() => markSession(date, 'missed')}
-                                            disabled={isMarkingThis}
+                                            disabled={isMarkingThis || status === 'missed'}
+                                            title="Mark as missed"
                                         >
                                             ✗
                                         </Button>
                                     </div>
-                                ) : (
-                                    <span className={cn("text-xs capitalize", color)}>
-                                        {status}
-                                    </span>
                                 )}
                             </div>
                         );
