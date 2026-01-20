@@ -4,8 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { EventCountdown } from '@/components/events/EventCountdown';
-import { CheckCircle2, Circle, ChevronLeft, ChevronRight } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronLeft, ChevronRight, Clock } from 'lucide-react';
 import { cn, parseLocalDate } from '@/lib/utils';
+import { format } from 'date-fns';
 
 interface FocusViewProps {
     events: Event[];
@@ -206,26 +207,41 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
                     </Button>
                 </div>
 
-                {/* Header: Label + Priority */}
+                {/* Header: Label + Priority + Session Times */}
                 <div className="text-center space-y-4">
-                    <div className="flex items-center justify-center gap-2">
-                        <Badge variant="outline" className="px-4 py-1 text-sm uppercase tracking-widest border-primary/50 text-primary">
-                            Current Focus
-                        </Badge>
-                        {currentSessionStatus === 'in-session' && (
-                            <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
-                                In Session
+                    <div className="flex flex-col items-center gap-2">
+                        <div className="flex items-center justify-center gap-2">
+                            <Badge variant="outline" className="px-4 py-1 text-sm uppercase tracking-widest border-primary/50 text-primary">
+                                Current Focus
                             </Badge>
-                        )}
-                        {currentSessionStatus === 'paused' && (
-                            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                                Session Paused
-                            </Badge>
-                        )}
-                        {currentSessionStatus === 'upcoming' && (
-                            <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
-                                Upcoming
-                            </Badge>
+                            {currentSessionStatus === 'in-session' && (
+                                <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">
+                                    In Session
+                                </Badge>
+                            )}
+                            {currentSessionStatus === 'paused' && (
+                                <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
+                                    Session Paused
+                                </Badge>
+                            )}
+                            {currentSessionStatus === 'upcoming' && (
+                                <Badge className="bg-blue-500/20 text-blue-400 border-blue-500/30">
+                                    Upcoming
+                                </Badge>
+                            )}
+                        </div>
+
+                        {/* Session Time Display */}
+                        {focusTask.dailyStartTime && focusTask.dailyEndTime && (
+                            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                <Clock className="w-4 h-4" />
+                                <span>
+                                    {(() => {
+                                        const { start, end } = getTodaySessionWindow(focusTask.dailyStartTime!, focusTask.dailyEndTime!);
+                                        return `${format(start, 'hh:mm a')} - ${format(end, 'hh:mm a')}`;
+                                    })()}
+                                </span>
+                            </div>
                         )}
                     </div>
                     <h1 className="text-2xl lg:text-3xl font-bold tracking-tight text-foreground/90">
