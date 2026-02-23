@@ -22,6 +22,7 @@ import {
     Heart,
     BookOpen,
     Users,
+    Wrench,
 } from 'lucide-react';
 
 interface SidebarProps {
@@ -35,6 +36,7 @@ const mainNavItems = [
     { icon: Calendar, label: 'Day', view: 'day', href: '/?view=day' },
     { icon: LayoutList, label: 'Agenda', view: 'agenda', href: '/?view=agenda' },
     { icon: BarChart3, label: 'Statistics', view: 'stats', href: '/stats' },
+    { icon: Wrench, label: 'Manage', view: 'manage', href: '/?view=manage' },
 ];
 
 const categoryItems = [

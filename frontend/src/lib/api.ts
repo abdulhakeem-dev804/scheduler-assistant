@@ -188,6 +188,13 @@ class ApiClient {
         });
     }
 
+    async bulkDeleteEvents(category?: string) {
+        const query = category ? `?category=${category}` : '';
+        return this.request<{ deleted: number }>(`/api/events/bulk${query}`, {
+            method: 'DELETE',
+        });
+    }
+
     // Health check
     async healthCheck() {
         return this.request<{ status: string }>('/health');

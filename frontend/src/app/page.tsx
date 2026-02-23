@@ -3,10 +3,11 @@
 import { useState, useCallback } from 'react';
 import { Sidebar, Header } from '@/components/layout';
 import { CalendarContainer } from '@/components/calendar';
-import { EventModal, ResolutionModal, ImportScheduleModal } from '@/components/events';
+import { EventModal, ResolutionModal } from '@/components/events';
 import { SessionEndedPopup } from '@/components/events/SessionEndedPopup';
 import { StatisticsView } from '@/components/dashboard/StatisticsView';
 import { FocusView } from '@/components/focus/FocusView';
+import { ManageView } from '@/components/manage/ManageView';
 import {
   useEvents,
   useCreateEvent,
@@ -43,7 +44,6 @@ export default function Home() {
   const [isResolutionOpen, setIsResolutionOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
   const [defaultDate, setDefaultDate] = useState<Date | undefined>();
-  const [isImportOpen, setIsImportOpen] = useState(false);
 
   // Session notification popup for daily-session events
   const { pendingPopups, dismissPopup, markSession } = useSessionNotifications(events);
@@ -187,7 +187,6 @@ export default function Home() {
           onToday={goToToday}
           onViewChange={setView}
           onAddEvent={handleAddEvent}
-          onImportSchedule={() => setIsImportOpen(true)}
         />
 
         {/* Content Area */}
@@ -198,6 +197,10 @@ export default function Home() {
               <FocusView events={events} onToggleComplete={handleToggleComplete} />
             ) : view === 'stats' ? (
               <StatisticsView events={events} />
+            ) : view === 'manage' ? (
+              <ManageView onImportSuccess={() => {
+                // Refresh events happens automatically via query invalidation in ManageView
+              }} />
             ) : (
               <CalendarContainer
                 view={view}
@@ -236,14 +239,7 @@ export default function Home() {
 
       <Toaster richColors position="bottom-right" />
 
-      {/* Import Schedule Modal */}
-      <ImportScheduleModal
-        isOpen={isImportOpen}
-        onClose={() => setIsImportOpen(false)}
-        onImportSuccess={() => {
-          // Events will auto-refresh via React Query invalidation
-        }}
-      />
+
 
       {/* Session Ended Popup */}
       {pendingPopups.length > 0 && (
