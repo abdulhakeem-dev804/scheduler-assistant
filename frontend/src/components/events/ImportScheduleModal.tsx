@@ -29,7 +29,7 @@ interface ImportScheduleModalProps {
 
 type ImportStep = 'input' | 'preview' | 'result';
 
-interface ImportResult {
+interface ImportApiResult {
     total_imported: number;
     total_errors: number;
     errors: Array<{ index: number; title?: string; error: string }>;
@@ -84,7 +84,7 @@ export function ImportScheduleModal({
     const [parsedEvents, setParsedEvents] = useState<ScheduleImportItem[]>([]);
     const [parseError, setParseError] = useState<string | null>(null);
     const [isImporting, setIsImporting] = useState(false);
-    const [importResult, setImportResult] = useState<ImportResult | null>(null);
+    const [importResult, setImportResult] = useState<ImportApiResult | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const queryClient = useQueryClient();
 
@@ -213,7 +213,7 @@ export function ImportScheduleModal({
                 toast.error(`${result.total_errors} event${result.total_errors > 1 ? 's' : ''} failed to import`);
             }
         } catch (error) {
-            toast.error(`Import failed: ${(error as Error).message}`);
+            toast.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
             setIsImporting(false);
         }

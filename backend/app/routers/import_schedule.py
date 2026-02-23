@@ -77,7 +77,7 @@ def import_schedule(payload: ScheduleImportRequest, db: Session = Depends(get_db
             errors.append(ImportErrorDetail(
                 index=idx,
                 title=item.title if item else None,
-                error=f"Database error: {str(e)}"
+                error=f"Database error: {e!s}"
             ))
 
     # Commit all valid events in one transaction
