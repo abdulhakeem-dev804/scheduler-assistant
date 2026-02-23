@@ -2,7 +2,7 @@
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { ArrowLeft, Moon, Sun, Monitor } from 'lucide-react';
+import { ArrowLeft, Moon } from 'lucide-react';
 import Link from 'next/link';
 
 export default function SettingsPage() {

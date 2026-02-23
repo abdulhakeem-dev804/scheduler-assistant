@@ -25,7 +25,7 @@ import {
 } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Event, CreateEventInput, EventCategory, Priority, Subtask } from '@/types';
-import { Trash2, Clock, Calendar } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 import { SubtaskList } from './SubtaskList';
 import { SmartTimePicker } from './SmartTimePicker';
 import { SmartDatePicker } from './SmartDatePicker';
@@ -163,10 +163,13 @@ export function EventModal({
             form.reset(getDefaultValues());
             setSubtasks(event?.subtasks || []);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally omitting form/getDefaultValues/event?.subtasks to avoid re-resetting on every keystroke
     }, [isOpen, event?.id, defaultDate]);
 
     // Watch date values for occupied slots
+    // eslint-disable-next-line react-hooks/incompatible-library -- react-hook-form's watch() is a known pattern
     const watchStartDate = form.watch('startDate');
+    // eslint-disable-next-line react-hooks/incompatible-library
     const watchEndDate = form.watch('endDate');
 
     // Get occupied slots for selected dates

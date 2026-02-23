@@ -150,12 +150,7 @@ export function useSessionNotifications(events: Event[]): UseSessionNotification
         };
     }, [checkPendingSessions]);
 
-    // Also check when events change
-    useEffect(() => {
-        if (dailySessionEvents.length > 0) {
-            checkPendingSessions();
-        }
-    }, [dailySessionEvents.length, checkPendingSessions]);
+
 
     return {
         pendingPopups,

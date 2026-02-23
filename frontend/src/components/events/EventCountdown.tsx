@@ -212,7 +212,7 @@ function calculateTimeState(
         } else {
             // Between sessions (paused) - check if today's session hasn't started yet or has ended
             const nowDate = new Date();
-            const { start: todaySessionStart, end: todaySessionEnd } = getTodaySessionWindow(dailyStartTime!, dailyEndTime!);
+            const { start: todaySessionStart } = getTodaySessionWindow(dailyStartTime!, dailyEndTime!);
 
             let nextSessionMs: number;
             let nextSessionIsToday: boolean;

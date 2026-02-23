@@ -12,7 +12,6 @@ import {
     Calendar,
     LayoutList,
     BarChart3,
-    Target, // Use Target icon for Focus
     Settings,
     Sun,
     Moon,
