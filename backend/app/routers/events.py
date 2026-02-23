@@ -23,7 +23,12 @@ async def get_events(
     limit: int = Query(1000, ge=1, le=5000),
     db: Session = Depends(get_db)
 ):
-    """Get all events with optional filters"""
+    """
+    Get all events with optional filters.
+    
+    Note: The default limit is 1000 and max is 5000 to support large curricula.
+    Callers should be aware that high limit values may impact memory usage and response times.
+    """
     query = db.query(Event)
     
     if start_date:

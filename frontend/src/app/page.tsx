@@ -198,9 +198,7 @@ export default function Home() {
             ) : view === 'stats' ? (
               <StatisticsView events={events} />
             ) : view === 'manage' ? (
-              <ManageView onImportSuccess={() => {
-                // Refresh events happens automatically via query invalidation in ManageView
-              }} />
+              <ManageView />
             ) : (
               <CalendarContainer
                 view={view}

@@ -177,41 +177,45 @@ export function ImportScheduleModal({
         }
     };
 
+    const executeImport = async (eventsToImport: ScheduleImportItem[]) => {
+        const payload = {
+            schedule: eventsToImport.map(event => ({
+                title: event.title,
+                description: event.description,
+                startDate: event.startDate,
+                endDate: event.endDate,
+                category: event.category || 'work',
+                priority: event.priority || 'medium',
+                isRecurring: event.isRecurring || false,
+                subtasks: event.subtasks || [],
+                timingMode: event.timingMode || 'specific',
+                dailyStartTime: event.dailyStartTime,
+                dailyEndTime: event.dailyEndTime,
+            })),
+        };
+
+        const result = await apiClient.importSchedule(payload);
+        setImportResult({
+            total_imported: result.total_imported,
+            total_errors: result.total_errors,
+            errors: result.errors,
+        });
+        setStep('result');
+
+        if (result.total_imported > 0) {
+            toast.success(`Successfully imported ${result.total_imported} event${result.total_imported > 1 ? 's' : ''}! 🎉`);
+            queryClient.invalidateQueries({ queryKey: eventKeys.all });
+            onImportSuccess();
+        }
+        if (result.total_errors > 0) {
+            toast.error(`${result.total_errors} event${result.total_errors > 1 ? 's' : ''} failed to import`);
+        }
+    };
+
     const handleImport = async () => {
         setIsImporting(true);
         try {
-            const payload = {
-                schedule: parsedEvents.map(event => ({
-                    title: event.title,
-                    description: event.description,
-                    startDate: event.startDate,
-                    endDate: event.endDate,
-                    category: event.category || 'work',
-                    priority: event.priority || 'medium',
-                    isRecurring: event.isRecurring || false,
-                    subtasks: event.subtasks || [],
-                    timingMode: event.timingMode || 'specific',
-                    dailyStartTime: event.dailyStartTime,
-                    dailyEndTime: event.dailyEndTime,
-                })),
-            };
-
-            const result = await apiClient.importSchedule(payload);
-            setImportResult({
-                total_imported: result.total_imported,
-                total_errors: result.total_errors,
-                errors: result.errors,
-            });
-            setStep('result');
-
-            if (result.total_imported > 0) {
-                toast.success(`Successfully imported ${result.total_imported} event${result.total_imported > 1 ? 's' : ''}! 🎉`);
-                queryClient.invalidateQueries({ queryKey: eventKeys.all });
-                onImportSuccess();
-            }
-            if (result.total_errors > 0) {
-                toast.error(`${result.total_errors} event${result.total_errors > 1 ? 's' : ''} failed to import`);
-            }
+            await executeImport(parsedEvents);
         } catch (error) {
             toast.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
@@ -226,38 +230,7 @@ export function ImportScheduleModal({
         setParsedEvents(events);
         setIsImporting(true);
         try {
-            const payload = {
-                schedule: events.map(event => ({
-                    title: event.title,
-                    description: event.description,
-                    startDate: event.startDate,
-                    endDate: event.endDate,
-                    category: event.category || 'work',
-                    priority: event.priority || 'medium',
-                    isRecurring: event.isRecurring || false,
-                    subtasks: event.subtasks || [],
-                    timingMode: event.timingMode || 'specific',
-                    dailyStartTime: event.dailyStartTime,
-                    dailyEndTime: event.dailyEndTime,
-                })),
-            };
-
-            const result = await apiClient.importSchedule(payload);
-            setImportResult({
-                total_imported: result.total_imported,
-                total_errors: result.total_errors,
-                errors: result.errors,
-            });
-            setStep('result');
-
-            if (result.total_imported > 0) {
-                toast.success(`Successfully imported ${result.total_imported} event${result.total_imported > 1 ? 's' : ''}! 🎉`);
-                queryClient.invalidateQueries({ queryKey: eventKeys.all });
-                onImportSuccess();
-            }
-            if (result.total_errors > 0) {
-                toast.error(`${result.total_errors} event${result.total_errors > 1 ? 's' : ''} failed to import`);
-            }
+            await executeImport(events);
         } catch (error) {
             toast.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
         } finally {

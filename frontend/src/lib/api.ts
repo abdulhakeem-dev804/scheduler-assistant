@@ -189,7 +189,7 @@ class ApiClient {
     }
 
     async bulkDeleteEvents(category?: string) {
-        const query = category ? `?category=${category}` : '';
+        const query = category ? `?category=${encodeURIComponent(category)}` : '';
         return this.request<{ deleted: number }>(`/api/events/bulk${query}`, {
             method: 'DELETE',
         });

@@ -25,6 +25,24 @@ interface ManageViewProps {
     onImportSuccess?: () => void;
 }
 
+const CATEGORY_COLORS: Record<string, string> = {
+    work: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
+    personal: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+    health: 'bg-green-500/20 text-green-300 border-green-500/30',
+    learning: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+    finance: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    social: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+};
+
+const CATEGORY_EMOJIS: Record<string, string> = {
+    work: '💼',
+    personal: '👤',
+    health: '❤️',
+    learning: '📚',
+    finance: '💰',
+    social: '👥',
+};
+
 export function ManageView({ onImportSuccess }: ManageViewProps) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -55,23 +73,7 @@ export function ManageView({ onImportSuccess }: ManageViewProps) {
         return acc;
     }, {});
 
-    const CATEGORY_COLORS: Record<string, string> = {
-        work: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/30',
-        personal: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
-        health: 'bg-green-500/20 text-green-300 border-green-500/30',
-        learning: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-        finance: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-        social: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-    };
 
-    const CATEGORY_EMOJIS: Record<string, string> = {
-        work: '💼',
-        personal: '👤',
-        health: '❤️',
-        learning: '📚',
-        finance: '💰',
-        social: '👥',
-    };
 
     return (
         <div className="p-6 max-w-4xl mx-auto space-y-6">
@@ -134,7 +136,10 @@ export function ManageView({ onImportSuccess }: ManageViewProps) {
                             Upload a .json file or paste JSON content to bulk import events into your schedule.
                         </p>
                         <Button
-                            onClick={() => setIsImportOpen(true)}
+                            onClick={() => {
+                                setDeleteResult(null);
+                                setIsImportOpen(true);
+                            }}
                             className="w-full gap-2"
                         >
                             <Upload className="h-4 w-4" />
