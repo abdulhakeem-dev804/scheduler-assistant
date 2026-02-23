@@ -17,6 +17,7 @@ ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "https://scheduler-assist.abdulhakeem.dev",
     "https://scheduler-api.abdulhakeem.dev",
+    "https://abdulhakeem.dev",
     "https://scheduler-assistant-git-main-abdulhakeem-shaiks-projects.vercel.app",
     "https://scheduler-assistant-abdulhakeem-shaiks-projects.vercel.app",
 ]

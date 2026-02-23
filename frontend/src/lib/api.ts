@@ -25,8 +25,7 @@ function getApiBaseUrl(): string {
         }
 
         // Vercel / Production Fallback
-        // If we are on a .vercel.app domain, we might want to default to the production API
-        if (hostname.includes('vercel.app')) {
+        if (hostname.includes('vercel.app') || hostname.includes('abdulhakeem.dev')) {
             return 'https://scheduler-api.abdulhakeem.dev';
         }
     }
