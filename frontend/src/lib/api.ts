@@ -5,29 +5,33 @@
 // Dynamically determine the API URL based on how the frontend is accessed
 import { CreateEventInput, ScheduleImportItem } from '@/types';
 function getApiBaseUrl(): string {
-    // Prioritize environment variable if set (works for both client and server)
+    // 1. Explicit environment variable (Best for Vercel)
     if (process.env.NEXT_PUBLIC_API_URL) {
-        return process.env.NEXT_PUBLIC_API_URL;
+        return process.env.NEXT_PUBLIC_API_URL.replace(/\/$/, '');
     }
 
-    if (typeof window === 'undefined') {
-        // Server-side rendering fallback
-        return 'http://localhost:8000';
+    // 2. Browser detection
+    if (typeof window !== 'undefined') {
+        const { hostname, protocol } = window.location;
+
+        // Local development
+        if (hostname === 'localhost' || hostname === '127.0.0.1') {
+            return 'http://localhost:5000'; // Match our local backend port
+        }
+
+        // Local network
+        if (hostname.match(/^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])\./)) {
+            return `${protocol}//${hostname}:5000`;
+        }
+
+        // Vercel / Production Fallback
+        // If we are on a .vercel.app domain, we might want to default to the production API
+        if (hostname.includes('vercel.app')) {
+            return 'https://scheduler-api.abdulhakeem.dev';
+        }
     }
 
-    const { hostname } = window.location;
-
-    // If accessed via localhost, use localhost:8000
-    if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return 'http://localhost:8000';
-    }
-
-    // If accessed via local network IP, use same IP with port 8000
-    if (hostname.match(/^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])\./)) {
-        return `http://${hostname}:8000`;
-    }
-
-    // If accessed via localtunnel or other remote URL (e.g. Vercel)
+    // 3. Absolute fallback
     return 'https://scheduler-api.abdulhakeem.dev';
 }
 
