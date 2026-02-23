@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { EventCountdown } from '@/components/events/EventCountdown';
-import { addHours, subHours, addMinutes, format } from 'date-fns';
+import { addHours, subHours, format } from 'date-fns';
 
 describe('EventCountdown', () => {
     beforeEach(() => {

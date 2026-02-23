@@ -70,7 +70,7 @@ export function SessionHistory({ event, onSessionMarked, compact = false }: Sess
         const end = parseISO(event.endDate);
         const today = new Date();
 
-        let current = new Date(start);
+        const current = new Date(start);
         while (current <= end) {
             // Only include past and today's sessions
             if (current <= today || current.toDateString() === today.toDateString()) {

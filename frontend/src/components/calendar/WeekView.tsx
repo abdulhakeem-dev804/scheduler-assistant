@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format, isSameDay, getHours, getMinutes } from 'date-fns';
+import { format, getHours, getMinutes } from 'date-fns';
 import { cn, getWeekDays, isToday, categoryColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -147,7 +147,7 @@ export function WeekView({ currentDate, events, onDateClick, onTimeClick, onEven
                 <div className="grid grid-cols-8 min-h-[1440px]">
                     {/* Time column */}
                     <div className="w-16 border-r border-border/30">
-                        {HOURS.map((hour, index) => (
+                        {HOURS.map((hour, _index) => (
                             <div key={hour} className="relative">
                                 {/* Midnight Divider Label */}
                                 {hour === 0 && (

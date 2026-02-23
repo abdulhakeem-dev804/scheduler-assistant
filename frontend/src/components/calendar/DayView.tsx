@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo } from 'react';
-import { format, isSameDay, getHours, getMinutes } from 'date-fns';
+import { format, getHours, getMinutes } from 'date-fns';
 import { cn, isToday, categoryColors, parseLocalDate } from '@/lib/utils';
 import { Event } from '@/types';
 import { ScrollArea } from '@/components/ui/scroll-area';

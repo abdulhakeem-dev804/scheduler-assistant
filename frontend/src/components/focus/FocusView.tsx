@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo, useCallback } from 'react';
+import { useState, useMemo } from 'react';
 import { Event } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -15,11 +15,6 @@ interface FocusViewProps {
     onToggleComplete: (event: Event) => void;
 }
 
-// Helper to parse time string "HH:mm" to minutes since midnight
-function parseTimeToMinutes(timeStr: string): number {
-    const [h, m] = timeStr.split(':').map(Number);
-    return h * 60 + m;
-}
 
 // Helper to get today's session window dates
 function getTodaySessionWindow(dailyStartTime: string, dailyEndTime: string): { start: Date; end: Date } {
@@ -125,15 +120,11 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
     }, [events]);
 
     // Reset index if out of bounds
-    useEffect(() => {
-        if (currentIndex >= focusTasks.length && focusTasks.length > 0) {
-            setCurrentIndex(focusTasks.length - 1);
-        } else if (focusTasks.length === 0) {
-            setCurrentIndex(0);
-        }
-    }, [focusTasks.length, currentIndex]);
+    const safeIndex = focusTasks.length === 0
+        ? 0
+        : Math.min(currentIndex, focusTasks.length - 1);
 
-    const focusTask = focusTasks[currentIndex];
+    const focusTask = focusTasks[safeIndex];
 
     const goToPrevious = () => {
         setCurrentIndex(prev => Math.max(0, prev - 1));
@@ -167,7 +158,7 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
                         variant="ghost"
                         size="icon"
                         onClick={goToPrevious}
-                        disabled={currentIndex === 0}
+                        disabled={safeIndex === 0}
                         className="h-10 w-10 rounded-full hover:bg-primary/10"
                     >
                         <ChevronLeft className="h-6 w-6" />
@@ -175,7 +166,7 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
 
                     <div className="flex flex-col items-center gap-2">
                         <span className="text-sm text-muted-foreground">
-                            Focus {currentIndex + 1} of {focusTasks.length}
+                            Focus {safeIndex + 1} of {focusTasks.length}
                         </span>
 
                         {/* Dot indicators */}
@@ -187,7 +178,7 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
                                         onClick={() => setCurrentIndex(idx)}
                                         className={cn(
                                             "w-2 h-2 rounded-full transition-all duration-200",
-                                            idx === currentIndex
+                                            idx === safeIndex
                                                 ? "bg-primary w-6"
                                                 : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
                                         )}
@@ -352,12 +343,12 @@ export function FocusView({ events, onToggleComplete }: FocusViewProps) {
                                 {focusTasks.map((task, idx) => (
                                     <Button
                                         key={task.id}
-                                        variant={idx === currentIndex ? "default" : "outline"}
+                                        variant={idx === safeIndex ? "default" : "outline"}
                                         size="sm"
                                         onClick={() => setCurrentIndex(idx)}
                                         className={cn(
                                             "text-xs",
-                                            idx === currentIndex && "ring-2 ring-primary/50"
+                                            idx === safeIndex && "ring-2 ring-primary/50"
                                         )}
                                     >
                                         {task.title.length > 20 ? task.title.slice(0, 20) + '...' : task.title}
@@ -437,7 +428,7 @@ function SessionActionButton({ event, onComplete }: { event: Event; onComplete: 
                 disabled
             >
                 <CheckCircle2 className="w-6 h-6" />
-                Today's Session Marked ✓
+                Today&apos;s Session Marked ✓
             </Button>
         );
     }
@@ -452,7 +443,7 @@ function SessionActionButton({ event, onComplete }: { event: Event; onComplete: 
                     disabled={isMarking}
                 >
                     <CalendarCheck className="w-6 h-6" />
-                    {isMarking ? 'Marking...' : "Mark Today's Session ✓"}
+                    {isMarking ? 'Marking...' : "Mark Today\u0027s Session ✓"}
                 </Button>
             )}
             <Button

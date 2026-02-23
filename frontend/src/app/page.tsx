@@ -24,7 +24,7 @@ export default function Home() {
   // Enable real-time sync across devices
   const { emitEventCreated, emitEventUpdated, emitEventDeleted } = useSocketSync();
 
-  const { data: events = [], isLoading: _isLoading, error: _error } = useEvents();
+  const { data: events = [] } = useEvents();
   const createEvent = useCreateEvent();
   const updateEvent = useUpdateEvent();
   const deleteEvent = useDeleteEvent();
