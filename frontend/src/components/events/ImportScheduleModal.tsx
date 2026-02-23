@@ -177,41 +177,60 @@ export function ImportScheduleModal({
         }
     };
 
+    const executeImport = async (eventsToImport: ScheduleImportItem[]) => {
+        const payload = {
+            schedule: eventsToImport.map(event => ({
+                title: event.title,
+                description: event.description,
+                startDate: event.startDate,
+                endDate: event.endDate,
+                category: event.category || 'work',
+                priority: event.priority || 'medium',
+                isRecurring: event.isRecurring || false,
+                subtasks: event.subtasks || [],
+                timingMode: event.timingMode || 'specific',
+                dailyStartTime: event.dailyStartTime,
+                dailyEndTime: event.dailyEndTime,
+            })),
+        };
+
+        const result = await apiClient.importSchedule(payload);
+        setImportResult({
+            total_imported: result.total_imported,
+            total_errors: result.total_errors,
+            errors: result.errors,
+        });
+        setStep('result');
+
+        if (result.total_imported > 0) {
+            toast.success(`Successfully imported ${result.total_imported} event${result.total_imported > 1 ? 's' : ''}! 🎉`);
+            queryClient.invalidateQueries({ queryKey: eventKeys.all });
+            onImportSuccess();
+        }
+        if (result.total_errors > 0) {
+            toast.error(`${result.total_errors} event${result.total_errors > 1 ? 's' : ''} failed to import`);
+        }
+    };
+
     const handleImport = async () => {
         setIsImporting(true);
         try {
-            const payload = {
-                schedule: parsedEvents.map(event => ({
-                    title: event.title,
-                    description: event.description,
-                    startDate: event.startDate,
-                    endDate: event.endDate,
-                    category: event.category || 'work',
-                    priority: event.priority || 'medium',
-                    isRecurring: event.isRecurring || false,
-                    subtasks: event.subtasks || [],
-                    timingMode: event.timingMode || 'specific',
-                    dailyStartTime: event.dailyStartTime,
-                    dailyEndTime: event.dailyEndTime,
-                })),
-            };
+            await executeImport(parsedEvents);
+        } catch (error) {
+            toast.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
+        } finally {
+            setIsImporting(false);
+        }
+    };
 
-            const result = await apiClient.importSchedule(payload);
-            setImportResult({
-                total_imported: result.total_imported,
-                total_errors: result.total_errors,
-                errors: result.errors,
-            });
-            setStep('result');
-
-            if (result.total_imported > 0) {
-                toast.success(`Successfully imported ${result.total_imported} event${result.total_imported > 1 ? 's' : ''}! 🎉`);
-                queryClient.invalidateQueries({ queryKey: eventKeys.all });
-                onImportSuccess();
-            }
-            if (result.total_errors > 0) {
-                toast.error(`${result.total_errors} event${result.total_errors > 1 ? 's' : ''} failed to import`);
-            }
+    // Direct import: parse + import in one step (skip preview)
+    const handleDirectImport = async () => {
+        const events = parseJson(jsonText);
+        if (!events) return;
+        setParsedEvents(events);
+        setIsImporting(true);
+        try {
+            await executeImport(events);
         } catch (error) {
             toast.error(`Import failed: ${error instanceof Error ? error.message : String(error)}`);
         } finally {
@@ -334,10 +353,23 @@ export function ImportScheduleModal({
                             </div>
                         )}
 
-                        <DialogFooter>
+                        <DialogFooter className="flex-shrink-0 gap-2 sm:gap-2">
                             <Button variant="outline" onClick={handleClose}>Cancel</Button>
-                            <Button onClick={handlePreview} disabled={!jsonText.trim()}>
+                            <Button variant="outline" onClick={handlePreview} disabled={!jsonText.trim()}>
                                 Preview Events
+                            </Button>
+                            <Button
+                                onClick={handleDirectImport}
+                                disabled={!jsonText.trim() || isImporting}
+                            >
+                                {isImporting ? (
+                                    <>
+                                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                                        Importing...
+                                    </>
+                                ) : (
+                                    'Import All'
+                                )}
                             </Button>
                         </DialogFooter>
                     </div>
@@ -345,8 +377,8 @@ export function ImportScheduleModal({
 
                 {/* Step 2: Preview */}
                 {step === 'preview' && (
-                    <div className="flex flex-col gap-4 flex-1 overflow-hidden">
-                        <ScrollArea className="flex-1 max-h-[400px]">
+                    <div className="flex flex-col gap-4 flex-1 min-h-0">
+                        <ScrollArea className="flex-1 min-h-0">
                             <div className="space-y-2 pr-3">
                                 {parsedEvents.map((event, idx) => (
                                     <div
@@ -393,7 +425,7 @@ export function ImportScheduleModal({
                             </div>
                         )}
 
-                        <DialogFooter>
+                        <DialogFooter className="flex-shrink-0 border-t border-border/30 pt-4">
                             <Button variant="outline" onClick={() => setStep('input')}>Back</Button>
                             <Button
                                 onClick={handleImport}

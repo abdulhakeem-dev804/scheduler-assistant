@@ -48,3 +48,7 @@ npm-debug.log*
 # Playwright
 playwright-report/
 test-results/
+
+# User Data
+ios_schedule.json
+iOS Development Learning Outline.pdf

@@ -20,10 +20,15 @@ async def get_events(
     category: Optional[str] = None,
     completed: Optional[bool] = None,
     skip: int = Query(0, ge=0),
-    limit: int = Query(100, ge=1, le=1000),
+    limit: int = Query(1000, ge=1, le=5000),
     db: Session = Depends(get_db)
 ):
-    """Get all events with optional filters"""
+    """
+    Get all events with optional filters.
+    
+    Note: The default limit is 1000 and max is 5000 to support large curricula.
+    Callers should be aware that high limit values may impact memory usage and response times.
+    """
     query = db.query(Event)
     
     if start_date:
@@ -150,6 +155,21 @@ async def update_event(
     db.commit()
     db.refresh(event)
     return event
+
+
+@router.delete("/bulk", status_code=200)
+async def delete_all_events(
+    category: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Delete all events, optionally filtered by category"""
+    query = db.query(Event)
+    if category:
+        query = query.filter(Event.category == category)
+    count = query.count()
+    query.delete(synchronize_session=False)
+    db.commit()
+    return {"deleted": count}
 
 
 @router.delete("/{event_id}", status_code=204)
