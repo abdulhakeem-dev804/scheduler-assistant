@@ -180,6 +180,14 @@ class ApiClient {
         });
     }
 
+    // Schedule Import API
+    async importSchedule(data: { schedule: Array<Record<string, unknown>> }) {
+        return this.request<ApiImportResponse>('/api/import/schedule', {
+            method: 'POST',
+            body: data,
+        });
+    }
+
     // Health check
     async healthCheck() {
         return this.request<{ status: string }>('/health');
@@ -229,7 +237,15 @@ interface ApiSessionStats {
     current_streak: number;
 }
 
+interface ApiImportResponse {
+    imported: ApiEvent[];
+    errors: Array<{ index: number; title?: string; error: string }>;
+    total_received: number;
+    total_imported: number;
+    total_errors: number;
+}
+
 export const apiClient = new ApiClient(API_BASE_URL);
-export type { ApiEvent, ApiSessionAttendance, ApiSessionStats };
+export type { ApiEvent, ApiSessionAttendance, ApiSessionStats, ApiImportResponse };
 
 

@@ -10,6 +10,7 @@ import {
     Plus,
     Search,
     X,
+    FileJson,
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
@@ -23,6 +24,7 @@ interface HeaderProps {
     onToday: () => void;
     onViewChange: (view: CalendarView) => void;
     onAddEvent: () => void;
+    onImportSchedule?: () => void;
     onSearch?: (query: string) => void;
 }
 
@@ -34,6 +36,7 @@ export function Header({
     onToday,
     onViewChange,
     onAddEvent,
+    onImportSchedule,
     onSearch,
 }: HeaderProps) {
     const [isSearchOpen, setIsSearchOpen] = useState(false);
@@ -144,6 +147,14 @@ export function Header({
                             </Button>
                         )}
                     </div>
+
+                    {/* Import Schedule Button */}
+                    {onImportSchedule && (
+                        <Button onClick={onImportSchedule} size="sm" variant="outline" className="gap-2" aria-label="Import Schedule">
+                            <FileJson className="h-4 w-4" />
+                            <span className="hidden sm:inline">Import</span>
+                        </Button>
+                    )}
 
                     {/* Add Event Button */}
                     <Button onClick={onAddEvent} size="sm" className="gap-2" aria-label="New Event">
