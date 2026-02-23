@@ -2,12 +2,12 @@
 Tests for the Schedule Import API
 """
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 
 # Helper to get dynamic future dates
 def get_future_dates(hours_offset=48, duration=1):
-    start = datetime.now() + timedelta(hours=hours_offset)
+    start = datetime.now(timezone.utc) + timedelta(hours=hours_offset)
     end = start + timedelta(hours=duration)
     return start.isoformat(), end.isoformat()
 

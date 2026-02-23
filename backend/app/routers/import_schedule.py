@@ -1,8 +1,9 @@
 """
 Import Schedule Router - Bulk import events from JSON
 """
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 from typing import List
 import uuid
 
@@ -66,18 +67,31 @@ async def import_schedule(payload: ScheduleImportRequest, db: Session = Depends(
             db.add(event)
             imported.append(event)
 
-        except Exception as e:
+        except (ValueError, TypeError) as e:
             errors.append(ImportErrorDetail(
                 index=idx,
                 title=item.title if item else None,
                 error=str(e)
             ))
+        except SQLAlchemyError as e:
+            errors.append(ImportErrorDetail(
+                index=idx,
+                title=item.title if item else None,
+                error=f"Database error: {str(e)}"
+            ))
 
     # Commit all valid events in one transaction
     if imported:
-        db.commit()
-        for event in imported:
-            db.refresh(event)
+        try:
+            db.commit()
+            for event in imported:
+                db.refresh(event)
+        except Exception as e:
+            db.rollback()
+            raise HTTPException(
+                status_code=500,
+                detail=f"Failed to commit imported events: {str(e)}"
+            )
 
     return ScheduleImportResponse(
         imported=imported,

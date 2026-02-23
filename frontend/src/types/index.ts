@@ -156,7 +156,7 @@ export interface ImportErrorDetail {
 export interface ImportResult {
     imported: Event[];
     errors: ImportErrorDetail[];
-    total_received: number;
-    total_imported: number;
-    total_errors: number;
+    totalReceived: number;
+    totalImported: number;
+    totalErrors: number;
 }

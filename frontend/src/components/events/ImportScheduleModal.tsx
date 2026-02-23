@@ -162,6 +162,10 @@ export function ImportScheduleModal({
                 setStep('preview');
             }
         };
+        reader.onerror = () => {
+            console.error('FileReader error:', reader.error);
+            setParseError('Failed to read file. Please try again.');
+        };
         reader.readAsText(file);
 
         // Reset file input
@@ -216,14 +220,19 @@ export function ImportScheduleModal({
         try {
             const text = await navigator.clipboard.readText();
             setJsonText(text);
-        } catch {
+        } catch (error) {
+            console.error('Clipboard access failed:', error);
             toast.error('Could not read clipboard. Please paste manually.');
         }
     };
 
-    const handleCopySample = () => {
-        navigator.clipboard.writeText(SAMPLE_JSON);
-        toast.success('Sample JSON copied to clipboard!');
+    const handleCopySample = async () => {
+        try {
+            await navigator.clipboard.writeText(SAMPLE_JSON);
+            toast.success('Sample JSON copied to clipboard!');
+        } catch {
+            toast.error('Failed to copy to clipboard.');
+        }
     };
 
     const removeEvent = (index: number) => {

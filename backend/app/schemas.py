@@ -175,8 +175,7 @@ class ScheduleImportItem(BaseModel):
     daily_start_time: Optional[str] = Field(None, alias="dailyStartTime", pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
     daily_end_time: Optional[str] = Field(None, alias="dailyEndTime", pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
 
-    class Config:
-        populate_by_name = True  # Accept both camelCase alias and snake_case
+    model_config = {"populate_by_name": True}  # Accept both camelCase alias and snake_case
 
 
 class ScheduleImportRequest(BaseModel):

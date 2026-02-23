@@ -3,7 +3,7 @@
  */
 
 // Dynamically determine the API URL based on how the frontend is accessed
-import { CreateEventInput } from '@/types';
+import { CreateEventInput, ScheduleImportItem } from '@/types';
 function getApiBaseUrl(): string {
     // Prioritize environment variable if set (works for both client and server)
     if (process.env.NEXT_PUBLIC_API_URL) {
@@ -181,7 +181,7 @@ class ApiClient {
     }
 
     // Schedule Import API
-    async importSchedule(data: { schedule: Array<Record<string, unknown>> }) {
+    async importSchedule(data: { schedule: ScheduleImportItem[] }) {
         return this.request<ApiImportResponse>('/api/import/schedule', {
             method: 'POST',
             body: data,
