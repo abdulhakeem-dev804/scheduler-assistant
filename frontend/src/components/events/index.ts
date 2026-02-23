@@ -5,5 +5,6 @@ export { ResolutionModal } from './ResolutionModal';
 export { SmartTimePicker } from './SmartTimePicker';
 export { SmartDatePicker } from './SmartDatePicker';
 export { EventCountdown } from './EventCountdown';
+export { ImportScheduleModal } from './ImportScheduleModal';
 
 

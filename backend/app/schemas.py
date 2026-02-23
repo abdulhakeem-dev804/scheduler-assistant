@@ -51,7 +51,7 @@ class EventBase(BaseModel):
     category: CategoryEnum = CategoryEnum.work
     priority: PriorityEnum = PriorityEnum.medium
     is_recurring: bool = False
-    subtasks: List[Subtask] = []
+    subtasks: List[Subtask] = Field(default_factory=list)
     timing_mode: TimingModeEnum = TimingModeEnum.specific
     daily_start_time: Optional[str] = Field(None, pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")  # "HH:mm" format
     daily_end_time: Optional[str] = Field(None, pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")    # "HH:mm" format
@@ -80,7 +80,7 @@ class EventUpdate(BaseModel):
 class EventResponse(EventBase):
     id: str
     is_completed: bool
-    subtasks: List[Subtask] = []
+    subtasks: List[Subtask] = Field(default_factory=list)
     timing_mode: TimingModeEnum = TimingModeEnum.specific  # Default for NULL DB values
     resolution: ResolutionEnum = ResolutionEnum.pending    # Default for NULL DB values
     reschedule_count: int = 0
@@ -159,3 +159,41 @@ class SessionStats(BaseModel):
     attendance_rate: float  # percentage 0-100
     current_streak: int  # consecutive attended days
 
+
+# Schedule Import Schemas
+class ScheduleImportItem(BaseModel):
+    """Single event item in a JSON schedule import — accepts camelCase from AI tools"""
+    title: str = Field(..., min_length=1, max_length=255)
+    description: Optional[str] = Field(None, max_length=1000)
+    start_date: datetime = Field(..., alias="startDate")
+    end_date: datetime = Field(..., alias="endDate")
+    category: CategoryEnum = CategoryEnum.work
+    priority: PriorityEnum = PriorityEnum.medium
+    is_recurring: bool = Field(False, alias="isRecurring")
+    subtasks: List[Subtask] = Field(default_factory=list)
+    timing_mode: TimingModeEnum = Field(TimingModeEnum.specific, alias="timingMode")
+    daily_start_time: Optional[str] = Field(None, alias="dailyStartTime", pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
+    daily_end_time: Optional[str] = Field(None, alias="dailyEndTime", pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
+
+    model_config = {"populate_by_name": True}  # Accept both camelCase alias and snake_case
+
+
+class ScheduleImportRequest(BaseModel):
+    """Request body for importing a full schedule"""
+    schedule: List[ScheduleImportItem] = Field(..., min_length=1)
+
+
+class ImportErrorDetail(BaseModel):
+    """Error info for a single failed import item"""
+    index: int
+    title: Optional[str] = None
+    error: str
+
+
+class ScheduleImportResponse(BaseModel):
+    """Response after importing a schedule"""
+    imported: List[EventResponse]
+    errors: List[ImportErrorDetail]
+    total_received: int
+    total_imported: int
+    total_errors: int

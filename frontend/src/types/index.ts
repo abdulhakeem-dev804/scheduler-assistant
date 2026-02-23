@@ -131,3 +131,32 @@ export interface ApiError {
     message: string;
     code?: string;
 }
+
+// Schedule Import Types
+export interface ScheduleImportItem {
+    title: string;
+    description?: string;
+    startDate: string;
+    endDate: string;
+    category?: EventCategory;
+    priority?: Priority;
+    isRecurring?: boolean;
+    subtasks?: { id?: string; title: string; completed?: boolean }[];
+    timingMode?: TimingMode;
+    dailyStartTime?: string;
+    dailyEndTime?: string;
+}
+
+export interface ImportErrorDetail {
+    index: number;
+    title?: string;
+    error: string;
+}
+
+export interface ImportResult {
+    imported: Event[];
+    errors: ImportErrorDetail[];
+    totalReceived: number;
+    totalImported: number;
+    totalErrors: number;
+}
