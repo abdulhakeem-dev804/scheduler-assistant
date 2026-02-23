@@ -149,6 +149,9 @@ export function ImportScheduleModal({
 
         if (!file.name.endsWith('.json')) {
             setParseError('Please upload a .json file');
+            if (fileInputRef.current) {
+                fileInputRef.current.value = '';
+            }
             return;
         }
 

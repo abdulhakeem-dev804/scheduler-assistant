@@ -51,7 +51,7 @@ class EventBase(BaseModel):
     category: CategoryEnum = CategoryEnum.work
     priority: PriorityEnum = PriorityEnum.medium
     is_recurring: bool = False
-    subtasks: List[Subtask] = []
+    subtasks: List[Subtask] = Field(default_factory=list)
     timing_mode: TimingModeEnum = TimingModeEnum.specific
     daily_start_time: Optional[str] = Field(None, pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")  # "HH:mm" format
     daily_end_time: Optional[str] = Field(None, pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")    # "HH:mm" format
@@ -80,7 +80,7 @@ class EventUpdate(BaseModel):
 class EventResponse(EventBase):
     id: str
     is_completed: bool
-    subtasks: List[Subtask] = []
+    subtasks: List[Subtask] = Field(default_factory=list)
     timing_mode: TimingModeEnum = TimingModeEnum.specific  # Default for NULL DB values
     resolution: ResolutionEnum = ResolutionEnum.pending    # Default for NULL DB values
     reschedule_count: int = 0
@@ -170,7 +170,7 @@ class ScheduleImportItem(BaseModel):
     category: CategoryEnum = CategoryEnum.work
     priority: PriorityEnum = PriorityEnum.medium
     is_recurring: bool = Field(False, alias="isRecurring")
-    subtasks: List[Subtask] = []
+    subtasks: List[Subtask] = Field(default_factory=list)
     timing_mode: TimingModeEnum = Field(TimingModeEnum.specific, alias="timingMode")
     daily_start_time: Optional[str] = Field(None, alias="dailyStartTime", pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")
     daily_end_time: Optional[str] = Field(None, alias="dailyEndTime", pattern=r"^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$")

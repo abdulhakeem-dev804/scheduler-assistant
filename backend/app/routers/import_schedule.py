@@ -20,7 +20,7 @@ router = APIRouter()
 
 
 @router.post("/schedule", response_model=ScheduleImportResponse, status_code=201)
-async def import_schedule(payload: ScheduleImportRequest, db: Session = Depends(get_db)):
+def import_schedule(payload: ScheduleImportRequest, db: Session = Depends(get_db)):
     """
     Import a schedule from JSON.
     Accepts an array of events (camelCase fields) and creates them in bulk.
@@ -86,12 +86,12 @@ async def import_schedule(payload: ScheduleImportRequest, db: Session = Depends(
             db.commit()
             for event in imported:
                 db.refresh(event)
-        except Exception as e:
+        except SQLAlchemyError as e:
             db.rollback()
             raise HTTPException(
                 status_code=500,
-                detail=f"Failed to commit imported events: {str(e)}"
-            )
+                detail=f"Failed to commit imported events: {e}"
+            ) from e
 
     return ScheduleImportResponse(
         imported=imported,

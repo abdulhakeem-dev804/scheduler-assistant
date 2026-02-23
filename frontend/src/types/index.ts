@@ -141,7 +141,7 @@ export interface ScheduleImportItem {
     category?: EventCategory;
     priority?: Priority;
     isRecurring?: boolean;
-    subtasks?: { title: string; completed?: boolean }[];
+    subtasks?: { id?: string; title: string; completed?: boolean }[];
     timingMode?: TimingMode;
     dailyStartTime?: string;
     dailyEndTime?: string;
